@@ -1113,18 +1113,19 @@ webpackJsonp([ 0 ], {
                     this.baseUrl = "", this.defaults = null, this.interceptors = [], "undefined" == typeof fetch) throw new Error("HttpClient requires a Fetch API implementation, but the current environment doesn't support it. You may need to load a polyfill such as https://github.com/github/fetch.");
                 }
                 return HttpClient.prototype.configure = function configure(config) {
-                    var _interceptors, normalizedConfig = void 0;
+                    var normalizedConfig = void 0;
                     if ("object" === ("undefined" == typeof config ? "undefined" : _typeof(config))) normalizedConfig = {
                         defaults: config
                     }; else {
                         if ("function" != typeof config) throw new Error("invalid config");
-                        normalizedConfig = new HttpClientConfiguration();
+                        normalizedConfig = new HttpClientConfiguration(), normalizedConfig.baseUrl = this.baseUrl, 
+                        normalizedConfig.defaults = Object.assign({}, this.defaults), normalizedConfig.interceptors = this.interceptors;
                         var c = config(normalizedConfig);
                         HttpClientConfiguration.prototype.isPrototypeOf(c) && (normalizedConfig = c);
                     }
                     var defaults = normalizedConfig.defaults;
                     if (defaults && Headers.prototype.isPrototypeOf(defaults.headers)) throw new Error("Default headers must be a plain object.");
-                    return this.baseUrl = normalizedConfig.baseUrl, this.defaults = defaults, (_interceptors = this.interceptors).push.apply(_interceptors, normalizedConfig.interceptors || []), 
+                    return this.baseUrl = normalizedConfig.baseUrl, this.defaults = defaults, this.interceptors = normalizedConfig.interceptors || [], 
                     this.isConfigured = !0, this;
                 }, HttpClient.prototype.fetch = function(_fetch) {
                     function fetch(_x, _x2) {

@@ -349,7 +349,7 @@
             }
             function makeIntoInstructionTarget(element) {
                 var value = element.getAttribute("class"), auTargetID = getNextAUTargetID();
-                return element.setAttribute("class", value ? value += " au-target" : "au-target"), 
+                return element.setAttribute("class", value ? value + " au-target" : "au-target"), 
                 element.setAttribute("au-target-id", auTargetID), auTargetID;
             }
             function makeShadowSlot(compiler, resources, node, instructions, parentInjectorId) {
@@ -583,7 +583,7 @@
             exports.processContent = processContent, exports.containerless = containerless, 
             exports.useViewStrategy = useViewStrategy, exports.useView = useView, exports.inlineView = inlineView, 
             exports.noView = noView, exports.elementConfig = elementConfig, exports.viewResources = viewResources;
-            var _aureliaLogging = __webpack_require__(5), LogManager = _interopRequireWildcard(_aureliaLogging), _aureliaMetadata = __webpack_require__(4), _aureliaPal = __webpack_require__(0), _aureliaPath = __webpack_require__(6), _aureliaLoader = __webpack_require__(9), _aureliaDependencyInjection = __webpack_require__(2), _aureliaBinding = __webpack_require__(3), _aureliaTaskQueue = __webpack_require__(7), animationEvent = exports.animationEvent = {
+            var _aureliaLogging = __webpack_require__(5), LogManager = _interopRequireWildcard(_aureliaLogging), _aureliaMetadata = __webpack_require__(4), _aureliaPal = __webpack_require__(0), _aureliaPath = __webpack_require__(6), _aureliaLoader = __webpack_require__(9), _aureliaDependencyInjection = __webpack_require__(3), _aureliaBinding = __webpack_require__(2), _aureliaTaskQueue = __webpack_require__(7), animationEvent = exports.animationEvent = {
                 enterBegin: "animation:enter:begin",
                 enterActive: "animation:enter:active",
                 enterDone: "animation:enter:done",
@@ -1431,7 +1431,7 @@
                         var targetId = firstChild.getAttribute("au-target-id");
                         if (targetId) {
                             var ins = instructions[targetId];
-                            (ins.shadowSlot || ins.lifting) && content.insertBefore(_aureliaPal.DOM.createComment("view"), firstChild);
+                            (ins.shadowSlot || ins.lifting || ins.elementInstruction && !ins.elementInstruction.anchorIsContainer) && content.insertBefore(_aureliaPal.DOM.createComment("view"), firstChild);
                         }
                     }
                     var factory = new ViewFactory(content, instructions, resources);
@@ -2383,7 +2383,7 @@
             Object.defineProperty(exports, "__esModule", {
                 value: !0
             }), exports.ArrayRepeatStrategy = void 0;
-            var _repeatUtilities = __webpack_require__(8), _aureliaBinding = __webpack_require__(3), ArrayRepeatStrategy = exports.ArrayRepeatStrategy = function() {
+            var _repeatUtilities = __webpack_require__(8), _aureliaBinding = __webpack_require__(2), ArrayRepeatStrategy = exports.ArrayRepeatStrategy = function() {
                 function ArrayRepeatStrategy() {}
                 return ArrayRepeatStrategy.prototype.getCollectionObserver = function getCollectionObserver(observerLocator, items) {
                     return observerLocator.getArrayObserver(items);
@@ -2484,7 +2484,7 @@
         Object.defineProperty(exports, "__esModule", {
             value: !0
         }), exports.BindingSignaler = void 0;
-        var _aureliaBinding = __webpack_require__(3), BindingSignaler = exports.BindingSignaler = function() {
+        var _aureliaBinding = __webpack_require__(2), BindingSignaler = exports.BindingSignaler = function() {
             function BindingSignaler() {
                 this.signals = {};
             }
@@ -2510,661 +2510,6 @@
     },
     /***/
     2: /***/
-    function(module, exports, __webpack_require__) {
-        "use strict";
-        function getDecoratorDependencies(target, name) {
-            var dependencies = target.inject;
-            if ("function" == typeof dependencies) throw new Error("Decorator " + name + ' cannot be used with "inject()".  Please use an array instead.');
-            return dependencies || (dependencies = _aureliaMetadata.metadata.getOwn(_aureliaMetadata.metadata.paramTypes, target).slice(), 
-            target.inject = dependencies), dependencies;
-        }
-        function lazy(keyValue) {
-            return function(target, key, index) {
-                var params = getDecoratorDependencies(target, "lazy");
-                params[index] = Lazy.of(keyValue);
-            };
-        }
-        function all(keyValue) {
-            return function(target, key, index) {
-                var params = getDecoratorDependencies(target, "all");
-                params[index] = All.of(keyValue);
-            };
-        }
-        function optional() {
-            var checkParentOrTarget = arguments.length <= 0 || void 0 === arguments[0] || arguments[0], deco = function deco(checkParent) {
-                return function(target, key, index) {
-                    var params = getDecoratorDependencies(target, "optional");
-                    params[index] = Optional.of(params[index], checkParent);
-                };
-            };
-            return deco("boolean" == typeof checkParentOrTarget ? checkParentOrTarget : !0);
-        }
-        function parent(target, key, index) {
-            var params = getDecoratorDependencies(target, "parent");
-            params[index] = Parent.of(params[index]);
-        }
-        function factory(keyValue, asValue) {
-            return function(target, key, index) {
-                var params = getDecoratorDependencies(target, "factory"), factory = Factory.of(keyValue);
-                params[index] = asValue ? factory.as(asValue) : factory;
-            };
-        }
-        function newInstance(asKeyOrTarget) {
-            for (var _len4 = arguments.length, dynamicDependencies = Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) dynamicDependencies[_key4 - 1] = arguments[_key4];
-            var deco = function deco(asKey) {
-                return function(target, key, index) {
-                    var params = getDecoratorDependencies(target, "newInstance");
-                    params[index] = NewInstance.of.apply(NewInstance, [ params[index] ].concat(dynamicDependencies)), 
-                    asKey && params[index].as(asKey);
-                };
-            };
-            return arguments.length >= 1 ? deco(asKeyOrTarget) : deco();
-        }
-        function invoker(value) {
-            return function(target) {
-                _aureliaMetadata.metadata.define(_aureliaMetadata.metadata.invoker, value, target);
-            };
-        }
-        function invokeAsFactory(potentialTarget) {
-            var deco = function deco(target) {
-                _aureliaMetadata.metadata.define(_aureliaMetadata.metadata.invoker, FactoryInvoker.instance, target);
-            };
-            return potentialTarget ? deco(potentialTarget) : deco;
-        }
-        function registration(value) {
-            return function(target) {
-                _aureliaMetadata.metadata.define(_aureliaMetadata.metadata.registration, value, target);
-            };
-        }
-        function transient(key) {
-            return registration(new TransientRegistration(key));
-        }
-        function singleton(keyOrRegisterInChild) {
-            var registerInChild = !(arguments.length <= 1 || void 0 === arguments[1]) && arguments[1];
-            return registration(new SingletonRegistration(keyOrRegisterInChild, registerInChild));
-        }
-        function validateKey(key) {
-            if (null === key || void 0 === key) throw new Error("key/value cannot be null or undefined. Are you trying to inject/register something that doesn't exist with DI?");
-        }
-        function invokeWithDynamicDependencies(container, fn, staticDependencies, dynamicDependencies) {
-            for (var i = staticDependencies.length, args = new Array(i); i--; ) args[i] = container.get(staticDependencies[i]);
-            return void 0 !== dynamicDependencies && (args = args.concat(dynamicDependencies)), 
-            Reflect.construct(fn, args);
-        }
-        function getDependencies(f) {
-            return f.hasOwnProperty("inject") ? "function" == typeof f.inject ? f.inject() : f.inject : [];
-        }
-        function autoinject(potentialTarget) {
-            var deco = function deco(target) {
-                var previousInject = target.inject, autoInject = _aureliaMetadata.metadata.getOwn(_aureliaMetadata.metadata.paramTypes, target) || _emptyParameters;
-                if (previousInject) for (var i = 0; i < autoInject.length; i++) if (previousInject[i] && previousInject[i] !== autoInject[i]) {
-                    var prevIndex = previousInject.indexOf(autoInject[i]);
-                    prevIndex > -1 && previousInject.splice(prevIndex, 1), previousInject.splice(prevIndex > -1 && prevIndex < i ? i - 1 : i, 0, autoInject[i]);
-                } else previousInject[i] || (previousInject[i] = autoInject[i]); else target.inject = autoInject;
-            };
-            return potentialTarget ? deco(potentialTarget) : deco;
-        }
-        function inject() {
-            for (var _len5 = arguments.length, rest = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) rest[_key5] = arguments[_key5];
-            return function(target, key, descriptor) {
-                if ("number" == typeof descriptor && 1 === rest.length) {
-                    var params = target.inject;
-                    if ("function" == typeof params) throw new Error('Decorator inject cannot be used with "inject()".  Please use an array instead.');
-                    return params || (params = _aureliaMetadata.metadata.getOwn(_aureliaMetadata.metadata.paramTypes, target).slice(), 
-                    target.inject = params), void (params[descriptor] = rest[0]);
-                }
-                if (descriptor) {
-                    var _fn = descriptor.value;
-                    _fn.inject = rest;
-                } else target.inject = rest;
-            };
-        }
-        Object.defineProperty(exports, "__esModule", {
-            value: !0
-        }), exports.Container = exports.InvocationHandler = exports._emptyParameters = exports.SingletonRegistration = exports.TransientRegistration = exports.FactoryInvoker = exports.NewInstance = exports.Factory = exports.StrategyResolver = exports.Parent = exports.Optional = exports.All = exports.Lazy = exports.resolver = void 0;
-        var _dec, _class, _dec2, _class3, _dec3, _class5, _dec4, _class7, _dec5, _class9, _dec6, _class11, _dec7, _class13, _classInvokers;
-        exports.getDecoratorDependencies = getDecoratorDependencies, exports.lazy = lazy, 
-        exports.all = all, exports.optional = optional, exports.parent = parent, exports.factory = factory, 
-        exports.newInstance = newInstance, exports.invoker = invoker, exports.invokeAsFactory = invokeAsFactory, 
-        exports.registration = registration, exports.transient = transient, exports.singleton = singleton, 
-        exports.autoinject = autoinject, exports.inject = inject;
-        var _aureliaMetadata = __webpack_require__(4), _aureliaPal = __webpack_require__(0), resolver = exports.resolver = _aureliaMetadata.protocol.create("aurelia:resolver", function(target) {
-            return "function" == typeof target.get || "Resolvers must implement: get(container: Container, key: any): any";
-        }), Lazy = exports.Lazy = (_dec = resolver(), _dec(_class = function() {
-            function Lazy(key) {
-                this._key = key;
-            }
-            return Lazy.prototype.get = function get(container) {
-                var _this = this;
-                return function() {
-                    return container.get(_this._key);
-                };
-            }, Lazy.of = function of(key) {
-                return new Lazy(key);
-            }, Lazy;
-        }()) || _class), All = exports.All = (_dec2 = resolver(), _dec2(_class3 = function() {
-            function All(key) {
-                this._key = key;
-            }
-            return All.prototype.get = function get(container) {
-                return container.getAll(this._key);
-            }, All.of = function of(key) {
-                return new All(key);
-            }, All;
-        }()) || _class3), Optional = exports.Optional = (_dec3 = resolver(), _dec3(_class5 = function() {
-            function Optional(key) {
-                var checkParent = arguments.length <= 1 || void 0 === arguments[1] || arguments[1];
-                this._key = key, this._checkParent = checkParent;
-            }
-            return Optional.prototype.get = function get(container) {
-                return container.hasResolver(this._key, this._checkParent) ? container.get(this._key) : null;
-            }, Optional.of = function of(key) {
-                var checkParent = arguments.length <= 1 || void 0 === arguments[1] || arguments[1];
-                return new Optional(key, checkParent);
-            }, Optional;
-        }()) || _class5), Parent = exports.Parent = (_dec4 = resolver(), _dec4(_class7 = function() {
-            function Parent(key) {
-                this._key = key;
-            }
-            return Parent.prototype.get = function get(container) {
-                return container.parent ? container.parent.get(this._key) : null;
-            }, Parent.of = function of(key) {
-                return new Parent(key);
-            }, Parent;
-        }()) || _class7), StrategyResolver = exports.StrategyResolver = (_dec5 = resolver(), 
-        _dec5(_class9 = function() {
-            function StrategyResolver(strategy, state) {
-                this.strategy = strategy, this.state = state;
-            }
-            return StrategyResolver.prototype.get = function get(container, key) {
-                switch (this.strategy) {
-                  case 0:
-                    return this.state;
-
-                  case 1:
-                    var singleton = container.invoke(this.state);
-                    return this.state = singleton, this.strategy = 0, singleton;
-
-                  case 2:
-                    return container.invoke(this.state);
-
-                  case 3:
-                    return this.state(container, key, this);
-
-                  case 4:
-                    return this.state[0].get(container, key);
-
-                  case 5:
-                    return container.get(this.state);
-
-                  default:
-                    throw new Error("Invalid strategy: " + this.strategy);
-                }
-            }, StrategyResolver;
-        }()) || _class9), Factory = exports.Factory = (_dec6 = resolver(), _dec6(_class11 = function() {
-            function Factory(key) {
-                this._key = key;
-            }
-            return Factory.prototype.get = function get(container) {
-                var _this2 = this;
-                return function() {
-                    for (var _len = arguments.length, rest = Array(_len), _key = 0; _key < _len; _key++) rest[_key] = arguments[_key];
-                    return container.invoke(_this2._key, rest);
-                };
-            }, Factory.of = function of(key) {
-                return new Factory(key);
-            }, Factory;
-        }()) || _class11), NewInstance = exports.NewInstance = (_dec7 = resolver(), _dec7(_class13 = function() {
-            function NewInstance(key) {
-                this.key = key, this.asKey = key;
-                for (var _len2 = arguments.length, dynamicDependencies = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) dynamicDependencies[_key2 - 1] = arguments[_key2];
-                this.dynamicDependencies = dynamicDependencies;
-            }
-            return NewInstance.prototype.get = function get(container) {
-                var dynamicDependencies = this.dynamicDependencies.length > 0 ? this.dynamicDependencies.map(function(dependency) {
-                    return dependency["protocol:aurelia:resolver"] ? dependency.get(container) : container.get(dependency);
-                }) : void 0, instance = container.invoke(this.key, dynamicDependencies);
-                return container.registerInstance(this.asKey, instance), instance;
-            }, NewInstance.prototype.as = function as(key) {
-                return this.asKey = key, this;
-            }, NewInstance.of = function of(key) {
-                for (var _len3 = arguments.length, dynamicDependencies = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) dynamicDependencies[_key3 - 1] = arguments[_key3];
-                return new (Function.prototype.bind.apply(NewInstance, [ null ].concat([ key ], dynamicDependencies)))();
-            }, NewInstance;
-        }()) || _class13), FactoryInvoker = exports.FactoryInvoker = function() {
-            function FactoryInvoker() {}
-            return FactoryInvoker.prototype.invoke = function invoke(container, fn, dependencies) {
-                for (var i = dependencies.length, args = new Array(i); i--; ) args[i] = container.get(dependencies[i]);
-                return fn.apply(void 0, args);
-            }, FactoryInvoker.prototype.invokeWithDynamicDependencies = function invokeWithDynamicDependencies(container, fn, staticDependencies, dynamicDependencies) {
-                for (var i = staticDependencies.length, args = new Array(i); i--; ) args[i] = container.get(staticDependencies[i]);
-                return void 0 !== dynamicDependencies && (args = args.concat(dynamicDependencies)), 
-                fn.apply(void 0, args);
-            }, FactoryInvoker;
-        }();
-        FactoryInvoker.instance = new FactoryInvoker();
-        var TransientRegistration = exports.TransientRegistration = function() {
-            function TransientRegistration(key) {
-                this._key = key;
-            }
-            return TransientRegistration.prototype.registerResolver = function registerResolver(container, key, fn) {
-                return container.registerTransient(this._key || key, fn);
-            }, TransientRegistration;
-        }(), SingletonRegistration = exports.SingletonRegistration = function() {
-            function SingletonRegistration(keyOrRegisterInChild) {
-                var registerInChild = !(arguments.length <= 1 || void 0 === arguments[1]) && arguments[1];
-                "boolean" == typeof keyOrRegisterInChild ? this._registerInChild = keyOrRegisterInChild : (this._key = keyOrRegisterInChild, 
-                this._registerInChild = registerInChild);
-            }
-            return SingletonRegistration.prototype.registerResolver = function registerResolver(container, key, fn) {
-                return this._registerInChild ? container.registerSingleton(this._key || key, fn) : container.root.registerSingleton(this._key || key, fn);
-            }, SingletonRegistration;
-        }(), _emptyParameters = exports._emptyParameters = Object.freeze([]);
-        _aureliaMetadata.metadata.registration = "aurelia:registration", _aureliaMetadata.metadata.invoker = "aurelia:invoker";
-        var resolverDecorates = resolver.decorates, InvocationHandler = exports.InvocationHandler = function() {
-            function InvocationHandler(fn, invoker, dependencies) {
-                this.fn = fn, this.invoker = invoker, this.dependencies = dependencies;
-            }
-            return InvocationHandler.prototype.invoke = function invoke(container, dynamicDependencies) {
-                return void 0 !== dynamicDependencies ? this.invoker.invokeWithDynamicDependencies(container, this.fn, this.dependencies, dynamicDependencies) : this.invoker.invoke(container, this.fn, this.dependencies);
-            }, InvocationHandler;
-        }(), classInvokers = (_classInvokers = {}, _classInvokers[0] = {
-            invoke: function invoke(container, Type) {
-                return new Type();
-            },
-            invokeWithDynamicDependencies: invokeWithDynamicDependencies
-        }, _classInvokers[1] = {
-            invoke: function invoke(container, Type, deps) {
-                return new Type(container.get(deps[0]));
-            },
-            invokeWithDynamicDependencies: invokeWithDynamicDependencies
-        }, _classInvokers[2] = {
-            invoke: function invoke(container, Type, deps) {
-                return new Type(container.get(deps[0]), container.get(deps[1]));
-            },
-            invokeWithDynamicDependencies: invokeWithDynamicDependencies
-        }, _classInvokers[3] = {
-            invoke: function invoke(container, Type, deps) {
-                return new Type(container.get(deps[0]), container.get(deps[1]), container.get(deps[2]));
-            },
-            invokeWithDynamicDependencies: invokeWithDynamicDependencies
-        }, _classInvokers[4] = {
-            invoke: function invoke(container, Type, deps) {
-                return new Type(container.get(deps[0]), container.get(deps[1]), container.get(deps[2]), container.get(deps[3]));
-            },
-            invokeWithDynamicDependencies: invokeWithDynamicDependencies
-        }, _classInvokers[5] = {
-            invoke: function invoke(container, Type, deps) {
-                return new Type(container.get(deps[0]), container.get(deps[1]), container.get(deps[2]), container.get(deps[3]), container.get(deps[4]));
-            },
-            invokeWithDynamicDependencies: invokeWithDynamicDependencies
-        }, _classInvokers.fallback = {
-            invoke: invokeWithDynamicDependencies,
-            invokeWithDynamicDependencies: invokeWithDynamicDependencies
-        }, _classInvokers), Container = exports.Container = function() {
-            function Container(configuration) {
-                void 0 === configuration && (configuration = {}), this._configuration = configuration, 
-                this._onHandlerCreated = configuration.onHandlerCreated, this._handlers = configuration.handlers || (configuration.handlers = new Map()), 
-                this._resolvers = new Map(), this.root = this, this.parent = null;
-            }
-            return Container.prototype.makeGlobal = function makeGlobal() {
-                return Container.instance = this, this;
-            }, Container.prototype.setHandlerCreatedCallback = function setHandlerCreatedCallback(onHandlerCreated) {
-                this._onHandlerCreated = onHandlerCreated, this._configuration.onHandlerCreated = onHandlerCreated;
-            }, Container.prototype.registerInstance = function registerInstance(key, instance) {
-                return this.registerResolver(key, new StrategyResolver(0, void 0 === instance ? key : instance));
-            }, Container.prototype.registerSingleton = function registerSingleton(key, fn) {
-                return this.registerResolver(key, new StrategyResolver(1, void 0 === fn ? key : fn));
-            }, Container.prototype.registerTransient = function registerTransient(key, fn) {
-                return this.registerResolver(key, new StrategyResolver(2, void 0 === fn ? key : fn));
-            }, Container.prototype.registerHandler = function registerHandler(key, handler) {
-                return this.registerResolver(key, new StrategyResolver(3, handler));
-            }, Container.prototype.registerAlias = function registerAlias(originalKey, aliasKey) {
-                return this.registerResolver(aliasKey, new StrategyResolver(5, originalKey));
-            }, Container.prototype.registerResolver = function registerResolver(key, resolver) {
-                validateKey(key);
-                var allResolvers = this._resolvers, result = allResolvers.get(key);
-                return void 0 === result ? allResolvers.set(key, resolver) : 4 === result.strategy ? result.state.push(resolver) : allResolvers.set(key, new StrategyResolver(4, [ result, resolver ])), 
-                resolver;
-            }, Container.prototype.autoRegister = function autoRegister(key, fn) {
-                if (fn = void 0 === fn ? key : fn, "function" == typeof fn) {
-                    var _registration = _aureliaMetadata.metadata.get(_aureliaMetadata.metadata.registration, fn);
-                    return void 0 === _registration ? this.registerResolver(key, new StrategyResolver(1, fn)) : _registration.registerResolver(this, key, fn);
-                }
-                return this.registerResolver(key, new StrategyResolver(0, fn));
-            }, Container.prototype.autoRegisterAll = function autoRegisterAll(fns) {
-                for (var i = fns.length; i--; ) this.autoRegister(fns[i]);
-            }, Container.prototype.unregister = function unregister(key) {
-                this._resolvers.delete(key);
-            }, Container.prototype.hasResolver = function hasResolver(key) {
-                var checkParent = !(arguments.length <= 1 || void 0 === arguments[1]) && arguments[1];
-                return validateKey(key), this._resolvers.has(key) || checkParent && null !== this.parent && this.parent.hasResolver(key, checkParent);
-            }, Container.prototype.get = function get(key) {
-                if (validateKey(key), key === Container) return this;
-                if (resolverDecorates(key)) return key.get(this, key);
-                var resolver = this._resolvers.get(key);
-                return void 0 === resolver ? null === this.parent ? this.autoRegister(key).get(this, key) : this.parent._get(key) : resolver.get(this, key);
-            }, Container.prototype._get = function _get(key) {
-                var resolver = this._resolvers.get(key);
-                return void 0 === resolver ? null === this.parent ? this.autoRegister(key).get(this, key) : this.parent._get(key) : resolver.get(this, key);
-            }, Container.prototype.getAll = function getAll(key) {
-                validateKey(key);
-                var resolver = this._resolvers.get(key);
-                if (void 0 === resolver) return null === this.parent ? _emptyParameters : this.parent.getAll(key);
-                if (4 === resolver.strategy) {
-                    for (var state = resolver.state, i = state.length, results = new Array(i); i--; ) results[i] = state[i].get(this, key);
-                    return results;
-                }
-                return [ resolver.get(this, key) ];
-            }, Container.prototype.createChild = function createChild() {
-                var child = new Container(this._configuration);
-                return child.root = this.root, child.parent = this, child;
-            }, Container.prototype.invoke = function invoke(fn, dynamicDependencies) {
-                try {
-                    var _handler = this._handlers.get(fn);
-                    return void 0 === _handler && (_handler = this._createInvocationHandler(fn), this._handlers.set(fn, _handler)), 
-                    _handler.invoke(this, dynamicDependencies);
-                } catch (e) {
-                    throw new _aureliaPal.AggregateError("Error invoking " + fn.name + ". Check the inner error for details.", e, !0);
-                }
-            }, Container.prototype._createInvocationHandler = function _createInvocationHandler(fn) {
-                var dependencies = void 0;
-                if (void 0 === fn.inject) dependencies = _aureliaMetadata.metadata.getOwn(_aureliaMetadata.metadata.paramTypes, fn) || _emptyParameters; else {
-                    dependencies = [];
-                    for (var ctor = fn; "function" == typeof ctor; ) {
-                        var _dependencies;
-                        (_dependencies = dependencies).push.apply(_dependencies, getDependencies(ctor)), 
-                        ctor = Object.getPrototypeOf(ctor);
-                    }
-                }
-                var invoker = _aureliaMetadata.metadata.getOwn(_aureliaMetadata.metadata.invoker, fn) || classInvokers[dependencies.length] || classInvokers.fallback, handler = new InvocationHandler(fn, invoker, dependencies);
-                return void 0 !== this._onHandlerCreated ? this._onHandlerCreated(handler) : handler;
-            }, Container;
-        }();
-    },
-    /***/
-    20: /***/
-    function(module, exports, __webpack_require__) {
-        "use strict";
-        /* WEBPACK VAR INJECTION */
-        (function(Promise) {
-            Object.defineProperty(exports, "__esModule", {
-                value: !0
-            }), exports.MapRepeatStrategy = void 0;
-            var _repeatUtilities = __webpack_require__(8), MapRepeatStrategy = exports.MapRepeatStrategy = function() {
-                function MapRepeatStrategy() {}
-                return MapRepeatStrategy.prototype.getCollectionObserver = function getCollectionObserver(observerLocator, items) {
-                    return observerLocator.getMapObserver(items);
-                }, MapRepeatStrategy.prototype.instanceChanged = function instanceChanged(repeat, items) {
-                    var _this = this, removePromise = repeat.removeAllViews(!0, !repeat.viewsRequireLifecycle);
-                    return removePromise instanceof Promise ? void removePromise.then(function() {
-                        return _this._standardProcessItems(repeat, items);
-                    }) : void this._standardProcessItems(repeat, items);
-                }, MapRepeatStrategy.prototype._standardProcessItems = function _standardProcessItems(repeat, items) {
-                    var index = 0, overrideContext = void 0;
-                    items.forEach(function(value, key) {
-                        overrideContext = (0, _repeatUtilities.createFullOverrideContext)(repeat, value, index, items.size, key), 
-                        repeat.addView(overrideContext.bindingContext, overrideContext), ++index;
-                    });
-                }, MapRepeatStrategy.prototype.instanceMutated = function instanceMutated(repeat, map, records) {
-                    var key = void 0, i = void 0, ii = void 0, overrideContext = void 0, removeIndex = void 0, record = void 0, rmPromises = [], viewOrPromise = void 0;
-                    for (i = 0, ii = records.length; i < ii; ++i) switch (record = records[i], key = record.key, 
-                    record.type) {
-                      case "update":
-                        removeIndex = this._getViewIndexByKey(repeat, key), viewOrPromise = repeat.removeView(removeIndex, !0, !repeat.viewsRequireLifecycle), 
-                        viewOrPromise instanceof Promise && rmPromises.push(viewOrPromise), overrideContext = (0, 
-                        _repeatUtilities.createFullOverrideContext)(repeat, map.get(key), removeIndex, map.size, key), 
-                        repeat.insertView(removeIndex, overrideContext.bindingContext, overrideContext);
-                        break;
-
-                      case "add":
-                        overrideContext = (0, _repeatUtilities.createFullOverrideContext)(repeat, map.get(key), map.size - 1, map.size, key), 
-                        repeat.insertView(map.size - 1, overrideContext.bindingContext, overrideContext);
-                        break;
-
-                      case "delete":
-                        if (void 0 === record.oldValue) return;
-                        removeIndex = this._getViewIndexByKey(repeat, key), viewOrPromise = repeat.removeView(removeIndex, !0, !repeat.viewsRequireLifecycle), 
-                        viewOrPromise instanceof Promise && rmPromises.push(viewOrPromise);
-                        break;
-
-                      case "clear":
-                        repeat.removeAllViews(!0, !repeat.viewsRequireLifecycle);
-                        break;
-
-                      default:
-                        continue;
-                    }
-                    rmPromises.length > 0 ? Promise.all(rmPromises).then(function() {
-                        (0, _repeatUtilities.updateOverrideContexts)(repeat.views(), 0);
-                    }) : (0, _repeatUtilities.updateOverrideContexts)(repeat.views(), 0);
-                }, MapRepeatStrategy.prototype._getViewIndexByKey = function _getViewIndexByKey(repeat, key) {
-                    var i = void 0, ii = void 0, child = void 0;
-                    for (i = 0, ii = repeat.viewCount(); i < ii; ++i) if (child = repeat.view(i), child.bindingContext[repeat.key] === key) return i;
-                }, MapRepeatStrategy;
-            }();
-        }).call(exports, __webpack_require__("bluebird"));
-    },
-    /***/
-    21: /***/
-    function(module, exports) {
-        "use strict";
-        Object.defineProperty(exports, "__esModule", {
-            value: !0
-        });
-        var NullRepeatStrategy = exports.NullRepeatStrategy = function() {
-            function NullRepeatStrategy() {}
-            return NullRepeatStrategy.prototype.instanceChanged = function instanceChanged(repeat, items) {
-                repeat.removeAllViews(!0);
-            }, NullRepeatStrategy.prototype.getCollectionObserver = function getCollectionObserver(observerLocator, items) {}, 
-            NullRepeatStrategy;
-        }();
-    },
-    /***/
-    22: /***/
-    function(module, exports, __webpack_require__) {
-        "use strict";
-        /* WEBPACK VAR INJECTION */
-        (function(Promise) {
-            Object.defineProperty(exports, "__esModule", {
-                value: !0
-            }), exports.NumberRepeatStrategy = void 0;
-            var _repeatUtilities = __webpack_require__(8), NumberRepeatStrategy = exports.NumberRepeatStrategy = function() {
-                function NumberRepeatStrategy() {}
-                return NumberRepeatStrategy.prototype.getCollectionObserver = function getCollectionObserver() {
-                    return null;
-                }, NumberRepeatStrategy.prototype.instanceChanged = function instanceChanged(repeat, value) {
-                    var _this = this, removePromise = repeat.removeAllViews(!0, !repeat.viewsRequireLifecycle);
-                    return removePromise instanceof Promise ? void removePromise.then(function() {
-                        return _this._standardProcessItems(repeat, value);
-                    }) : void this._standardProcessItems(repeat, value);
-                }, NumberRepeatStrategy.prototype._standardProcessItems = function _standardProcessItems(repeat, value) {
-                    var childrenLength = repeat.viewCount(), i = void 0, ii = void 0, overrideContext = void 0, viewsToRemove = void 0;
-                    if (value = Math.floor(value), viewsToRemove = childrenLength - value, viewsToRemove > 0) for (viewsToRemove > childrenLength && (viewsToRemove = childrenLength), 
-                    i = 0, ii = viewsToRemove; i < ii; ++i) repeat.removeView(childrenLength - (i + 1), !0, !repeat.viewsRequireLifecycle); else {
-                        for (i = childrenLength, ii = value; i < ii; ++i) overrideContext = (0, _repeatUtilities.createFullOverrideContext)(repeat, i, i, ii), 
-                        repeat.addView(overrideContext.bindingContext, overrideContext);
-                        (0, _repeatUtilities.updateOverrideContexts)(repeat.views(), 0);
-                    }
-                }, NumberRepeatStrategy;
-            }();
-        }).call(exports, __webpack_require__("bluebird"));
-    },
-    /***/
-    23: /***/
-    function(module, exports, __webpack_require__) {
-        "use strict";
-        Object.defineProperty(exports, "__esModule", {
-            value: !0
-        }), exports.RepeatStrategyLocator = void 0;
-        var _nullRepeatStrategy = __webpack_require__(21), _arrayRepeatStrategy = __webpack_require__(17), _mapRepeatStrategy = __webpack_require__(20), _setRepeatStrategy = __webpack_require__(24), _numberRepeatStrategy = __webpack_require__(22), RepeatStrategyLocator = exports.RepeatStrategyLocator = function() {
-            function RepeatStrategyLocator() {
-                this.matchers = [], this.strategies = [], this.addStrategy(function(items) {
-                    return null === items || void 0 === items;
-                }, new _nullRepeatStrategy.NullRepeatStrategy()), this.addStrategy(function(items) {
-                    return items instanceof Array;
-                }, new _arrayRepeatStrategy.ArrayRepeatStrategy()), this.addStrategy(function(items) {
-                    return items instanceof Map;
-                }, new _mapRepeatStrategy.MapRepeatStrategy()), this.addStrategy(function(items) {
-                    return items instanceof Set;
-                }, new _setRepeatStrategy.SetRepeatStrategy()), this.addStrategy(function(items) {
-                    return "number" == typeof items;
-                }, new _numberRepeatStrategy.NumberRepeatStrategy());
-            }
-            return RepeatStrategyLocator.prototype.addStrategy = function addStrategy(matcher, strategy) {
-                this.matchers.push(matcher), this.strategies.push(strategy);
-            }, RepeatStrategyLocator.prototype.getStrategy = function getStrategy(items) {
-                for (var matchers = this.matchers, i = 0, ii = matchers.length; i < ii; ++i) if (matchers[i](items)) return this.strategies[i];
-                return null;
-            }, RepeatStrategyLocator;
-        }();
-    },
-    /***/
-    24: /***/
-    function(module, exports, __webpack_require__) {
-        "use strict";
-        /* WEBPACK VAR INJECTION */
-        (function(Promise) {
-            Object.defineProperty(exports, "__esModule", {
-                value: !0
-            }), exports.SetRepeatStrategy = void 0;
-            var _repeatUtilities = __webpack_require__(8), SetRepeatStrategy = exports.SetRepeatStrategy = function() {
-                function SetRepeatStrategy() {}
-                return SetRepeatStrategy.prototype.getCollectionObserver = function getCollectionObserver(observerLocator, items) {
-                    return observerLocator.getSetObserver(items);
-                }, SetRepeatStrategy.prototype.instanceChanged = function instanceChanged(repeat, items) {
-                    var _this = this, removePromise = repeat.removeAllViews(!0, !repeat.viewsRequireLifecycle);
-                    return removePromise instanceof Promise ? void removePromise.then(function() {
-                        return _this._standardProcessItems(repeat, items);
-                    }) : void this._standardProcessItems(repeat, items);
-                }, SetRepeatStrategy.prototype._standardProcessItems = function _standardProcessItems(repeat, items) {
-                    var index = 0, overrideContext = void 0;
-                    items.forEach(function(value) {
-                        overrideContext = (0, _repeatUtilities.createFullOverrideContext)(repeat, value, index, items.size), 
-                        repeat.addView(overrideContext.bindingContext, overrideContext), ++index;
-                    });
-                }, SetRepeatStrategy.prototype.instanceMutated = function instanceMutated(repeat, set, records) {
-                    var value = void 0, i = void 0, ii = void 0, overrideContext = void 0, removeIndex = void 0, record = void 0, rmPromises = [], viewOrPromise = void 0;
-                    for (i = 0, ii = records.length; i < ii; ++i) switch (record = records[i], value = record.value, 
-                    record.type) {
-                      case "add":
-                        overrideContext = (0, _repeatUtilities.createFullOverrideContext)(repeat, value, set.size - 1, set.size), 
-                        repeat.insertView(set.size - 1, overrideContext.bindingContext, overrideContext);
-                        break;
-
-                      case "delete":
-                        removeIndex = this._getViewIndexByValue(repeat, value), viewOrPromise = repeat.removeView(removeIndex, !0, !repeat.viewsRequireLifecycle), 
-                        viewOrPromise instanceof Promise && rmPromises.push(viewOrPromise);
-                        break;
-
-                      case "clear":
-                        repeat.removeAllViews(!0, !repeat.viewsRequireLifecycle);
-                        break;
-
-                      default:
-                        continue;
-                    }
-                    rmPromises.length > 0 ? Promise.all(rmPromises).then(function() {
-                        (0, _repeatUtilities.updateOverrideContexts)(repeat.views(), 0);
-                    }) : (0, _repeatUtilities.updateOverrideContexts)(repeat.views(), 0);
-                }, SetRepeatStrategy.prototype._getViewIndexByValue = function _getViewIndexByValue(repeat, value) {
-                    var i = void 0, ii = void 0, child = void 0;
-                    for (i = 0, ii = repeat.viewCount(); i < ii; ++i) if (child = repeat.view(i), child.bindingContext[repeat.local] === value) return i;
-                }, SetRepeatStrategy;
-            }();
-        }).call(exports, __webpack_require__("bluebird"));
-    },
-    /***/
-    28: /***/
-    function(module, exports, __webpack_require__) {
-        "use strict";
-        function _possibleConstructorReturn(self, call) {
-            if (!self) throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-            return !call || "object" != typeof call && "function" != typeof call ? self : call;
-        }
-        function _inherits(subClass, superClass) {
-            if ("function" != typeof superClass && null !== superClass) throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
-            subClass.prototype = Object.create(superClass && superClass.prototype, {
-                constructor: {
-                    value: subClass,
-                    enumerable: !1,
-                    writable: !0,
-                    configurable: !0
-                }
-            }), superClass && (Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass);
-        }
-        function fixupCSSUrls(address, css) {
-            if ("string" != typeof css) throw new Error("Failed loading required CSS file: " + address);
-            return css.replace(cssUrlMatcher, function(match, p1) {
-                var quote = p1.charAt(0);
-                return "'" !== quote && '"' !== quote || (p1 = p1.substr(1, p1.length - 2)), "url('" + (0, 
-                _aureliaPath.relativeToFile)(p1, address) + "')";
-            });
-        }
-        function _createCSSResource(address) {
-            var _dec, _class, ViewCSS = (_dec = (0, _aureliaTemplating.resource)(new CSSResource(address)), 
-            _dec(_class = function(_CSSViewEngineHooks) {
-                function ViewCSS() {
-                    return _possibleConstructorReturn(this, _CSSViewEngineHooks.apply(this, arguments));
-                }
-                return _inherits(ViewCSS, _CSSViewEngineHooks), ViewCSS;
-            }(CSSViewEngineHooks)) || _class);
-            return ViewCSS;
-        }
-        Object.defineProperty(exports, "__esModule", {
-            value: !0
-        }), exports._createCSSResource = _createCSSResource;
-        var _aureliaTemplating = __webpack_require__(1), _aureliaLoader = __webpack_require__(9), _aureliaDependencyInjection = __webpack_require__(2), _aureliaPath = __webpack_require__(6), _aureliaPal = __webpack_require__(0), cssUrlMatcher = /url\((?!['"]data)([^)]+)\)/gi, CSSResource = function() {
-            function CSSResource(address) {
-                this.address = address, this._scoped = null, this._global = !1, this._alreadyGloballyInjected = !1;
-            }
-            return CSSResource.prototype.initialize = function initialize(container, target) {
-                this._scoped = new target(this);
-            }, CSSResource.prototype.register = function register(registry, name) {
-                "scoped" === name ? registry.registerViewEngineHooks(this._scoped) : this._global = !0;
-            }, CSSResource.prototype.load = function load(container) {
-                var _this = this;
-                return container.get(_aureliaLoader.Loader).loadText(this.address).catch(function(err) {
-                    return null;
-                }).then(function(text) {
-                    text = fixupCSSUrls(_this.address, text), _this._scoped.css = text, _this._global && (_this._alreadyGloballyInjected = !0, 
-                    _aureliaPal.DOM.injectStyles(text));
-                });
-            }, CSSResource;
-        }(), CSSViewEngineHooks = function() {
-            function CSSViewEngineHooks(owner) {
-                this.owner = owner, this.css = null;
-            }
-            return CSSViewEngineHooks.prototype.beforeCompile = function beforeCompile(content, resources, instruction) {
-                if (instruction.targetShadowDOM) _aureliaPal.DOM.injectStyles(this.css, content, !0); else if (_aureliaPal.FEATURE.scopedCSS) {
-                    var styleNode = _aureliaPal.DOM.injectStyles(this.css, content, !0);
-                    styleNode.setAttribute("scoped", "scoped");
-                } else this.owner._alreadyGloballyInjected || (_aureliaPal.DOM.injectStyles(this.css), 
-                this.owner._alreadyGloballyInjected = !0);
-            }, CSSViewEngineHooks;
-        }();
-    },
-    /***/
-    29: /***/
-    function(module, exports, __webpack_require__) {
-        "use strict";
-        function _createDynamicElement(name, viewUrl, bindableNames) {
-            for (var _dec, _dec2, _class, DynamicElement = (_dec = (0, _aureliaTemplating.customElement)(name), 
-            _dec2 = (0, _aureliaTemplating.useView)(viewUrl), _dec(_class = _dec2(_class = function() {
-                function DynamicElement() {}
-                return DynamicElement.prototype.bind = function bind(bindingContext) {
-                    this.$parent = bindingContext;
-                }, DynamicElement;
-            }()) || _class) || _class), i = 0, ii = bindableNames.length; i < ii; ++i) (0, _aureliaTemplating.bindable)(bindableNames[i])(DynamicElement);
-            return DynamicElement;
-        }
-        Object.defineProperty(exports, "__esModule", {
-            value: !0
-        }), exports._createDynamicElement = _createDynamicElement;
-        var _aureliaTemplating = __webpack_require__(1);
-    },
-    /***/
-    3: /***/
     function(module, exports, __webpack_require__) {
         "use strict";
         function _interopRequireWildcard(obj) {
@@ -5609,6 +4954,661 @@
         }(ModifyCollectionObserver);
     },
     /***/
+    20: /***/
+    function(module, exports, __webpack_require__) {
+        "use strict";
+        /* WEBPACK VAR INJECTION */
+        (function(Promise) {
+            Object.defineProperty(exports, "__esModule", {
+                value: !0
+            }), exports.MapRepeatStrategy = void 0;
+            var _repeatUtilities = __webpack_require__(8), MapRepeatStrategy = exports.MapRepeatStrategy = function() {
+                function MapRepeatStrategy() {}
+                return MapRepeatStrategy.prototype.getCollectionObserver = function getCollectionObserver(observerLocator, items) {
+                    return observerLocator.getMapObserver(items);
+                }, MapRepeatStrategy.prototype.instanceChanged = function instanceChanged(repeat, items) {
+                    var _this = this, removePromise = repeat.removeAllViews(!0, !repeat.viewsRequireLifecycle);
+                    return removePromise instanceof Promise ? void removePromise.then(function() {
+                        return _this._standardProcessItems(repeat, items);
+                    }) : void this._standardProcessItems(repeat, items);
+                }, MapRepeatStrategy.prototype._standardProcessItems = function _standardProcessItems(repeat, items) {
+                    var index = 0, overrideContext = void 0;
+                    items.forEach(function(value, key) {
+                        overrideContext = (0, _repeatUtilities.createFullOverrideContext)(repeat, value, index, items.size, key), 
+                        repeat.addView(overrideContext.bindingContext, overrideContext), ++index;
+                    });
+                }, MapRepeatStrategy.prototype.instanceMutated = function instanceMutated(repeat, map, records) {
+                    var key = void 0, i = void 0, ii = void 0, overrideContext = void 0, removeIndex = void 0, record = void 0, rmPromises = [], viewOrPromise = void 0;
+                    for (i = 0, ii = records.length; i < ii; ++i) switch (record = records[i], key = record.key, 
+                    record.type) {
+                      case "update":
+                        removeIndex = this._getViewIndexByKey(repeat, key), viewOrPromise = repeat.removeView(removeIndex, !0, !repeat.viewsRequireLifecycle), 
+                        viewOrPromise instanceof Promise && rmPromises.push(viewOrPromise), overrideContext = (0, 
+                        _repeatUtilities.createFullOverrideContext)(repeat, map.get(key), removeIndex, map.size, key), 
+                        repeat.insertView(removeIndex, overrideContext.bindingContext, overrideContext);
+                        break;
+
+                      case "add":
+                        overrideContext = (0, _repeatUtilities.createFullOverrideContext)(repeat, map.get(key), map.size - 1, map.size, key), 
+                        repeat.insertView(map.size - 1, overrideContext.bindingContext, overrideContext);
+                        break;
+
+                      case "delete":
+                        if (void 0 === record.oldValue) return;
+                        removeIndex = this._getViewIndexByKey(repeat, key), viewOrPromise = repeat.removeView(removeIndex, !0, !repeat.viewsRequireLifecycle), 
+                        viewOrPromise instanceof Promise && rmPromises.push(viewOrPromise);
+                        break;
+
+                      case "clear":
+                        repeat.removeAllViews(!0, !repeat.viewsRequireLifecycle);
+                        break;
+
+                      default:
+                        continue;
+                    }
+                    rmPromises.length > 0 ? Promise.all(rmPromises).then(function() {
+                        (0, _repeatUtilities.updateOverrideContexts)(repeat.views(), 0);
+                    }) : (0, _repeatUtilities.updateOverrideContexts)(repeat.views(), 0);
+                }, MapRepeatStrategy.prototype._getViewIndexByKey = function _getViewIndexByKey(repeat, key) {
+                    var i = void 0, ii = void 0, child = void 0;
+                    for (i = 0, ii = repeat.viewCount(); i < ii; ++i) if (child = repeat.view(i), child.bindingContext[repeat.key] === key) return i;
+                }, MapRepeatStrategy;
+            }();
+        }).call(exports, __webpack_require__("bluebird"));
+    },
+    /***/
+    21: /***/
+    function(module, exports) {
+        "use strict";
+        Object.defineProperty(exports, "__esModule", {
+            value: !0
+        });
+        var NullRepeatStrategy = exports.NullRepeatStrategy = function() {
+            function NullRepeatStrategy() {}
+            return NullRepeatStrategy.prototype.instanceChanged = function instanceChanged(repeat, items) {
+                repeat.removeAllViews(!0);
+            }, NullRepeatStrategy.prototype.getCollectionObserver = function getCollectionObserver(observerLocator, items) {}, 
+            NullRepeatStrategy;
+        }();
+    },
+    /***/
+    22: /***/
+    function(module, exports, __webpack_require__) {
+        "use strict";
+        /* WEBPACK VAR INJECTION */
+        (function(Promise) {
+            Object.defineProperty(exports, "__esModule", {
+                value: !0
+            }), exports.NumberRepeatStrategy = void 0;
+            var _repeatUtilities = __webpack_require__(8), NumberRepeatStrategy = exports.NumberRepeatStrategy = function() {
+                function NumberRepeatStrategy() {}
+                return NumberRepeatStrategy.prototype.getCollectionObserver = function getCollectionObserver() {
+                    return null;
+                }, NumberRepeatStrategy.prototype.instanceChanged = function instanceChanged(repeat, value) {
+                    var _this = this, removePromise = repeat.removeAllViews(!0, !repeat.viewsRequireLifecycle);
+                    return removePromise instanceof Promise ? void removePromise.then(function() {
+                        return _this._standardProcessItems(repeat, value);
+                    }) : void this._standardProcessItems(repeat, value);
+                }, NumberRepeatStrategy.prototype._standardProcessItems = function _standardProcessItems(repeat, value) {
+                    var childrenLength = repeat.viewCount(), i = void 0, ii = void 0, overrideContext = void 0, viewsToRemove = void 0;
+                    if (value = Math.floor(value), viewsToRemove = childrenLength - value, viewsToRemove > 0) for (viewsToRemove > childrenLength && (viewsToRemove = childrenLength), 
+                    i = 0, ii = viewsToRemove; i < ii; ++i) repeat.removeView(childrenLength - (i + 1), !0, !repeat.viewsRequireLifecycle); else {
+                        for (i = childrenLength, ii = value; i < ii; ++i) overrideContext = (0, _repeatUtilities.createFullOverrideContext)(repeat, i, i, ii), 
+                        repeat.addView(overrideContext.bindingContext, overrideContext);
+                        (0, _repeatUtilities.updateOverrideContexts)(repeat.views(), 0);
+                    }
+                }, NumberRepeatStrategy;
+            }();
+        }).call(exports, __webpack_require__("bluebird"));
+    },
+    /***/
+    23: /***/
+    function(module, exports, __webpack_require__) {
+        "use strict";
+        Object.defineProperty(exports, "__esModule", {
+            value: !0
+        }), exports.RepeatStrategyLocator = void 0;
+        var _nullRepeatStrategy = __webpack_require__(21), _arrayRepeatStrategy = __webpack_require__(17), _mapRepeatStrategy = __webpack_require__(20), _setRepeatStrategy = __webpack_require__(24), _numberRepeatStrategy = __webpack_require__(22), RepeatStrategyLocator = exports.RepeatStrategyLocator = function() {
+            function RepeatStrategyLocator() {
+                this.matchers = [], this.strategies = [], this.addStrategy(function(items) {
+                    return null === items || void 0 === items;
+                }, new _nullRepeatStrategy.NullRepeatStrategy()), this.addStrategy(function(items) {
+                    return items instanceof Array;
+                }, new _arrayRepeatStrategy.ArrayRepeatStrategy()), this.addStrategy(function(items) {
+                    return items instanceof Map;
+                }, new _mapRepeatStrategy.MapRepeatStrategy()), this.addStrategy(function(items) {
+                    return items instanceof Set;
+                }, new _setRepeatStrategy.SetRepeatStrategy()), this.addStrategy(function(items) {
+                    return "number" == typeof items;
+                }, new _numberRepeatStrategy.NumberRepeatStrategy());
+            }
+            return RepeatStrategyLocator.prototype.addStrategy = function addStrategy(matcher, strategy) {
+                this.matchers.push(matcher), this.strategies.push(strategy);
+            }, RepeatStrategyLocator.prototype.getStrategy = function getStrategy(items) {
+                for (var matchers = this.matchers, i = 0, ii = matchers.length; i < ii; ++i) if (matchers[i](items)) return this.strategies[i];
+                return null;
+            }, RepeatStrategyLocator;
+        }();
+    },
+    /***/
+    24: /***/
+    function(module, exports, __webpack_require__) {
+        "use strict";
+        /* WEBPACK VAR INJECTION */
+        (function(Promise) {
+            Object.defineProperty(exports, "__esModule", {
+                value: !0
+            }), exports.SetRepeatStrategy = void 0;
+            var _repeatUtilities = __webpack_require__(8), SetRepeatStrategy = exports.SetRepeatStrategy = function() {
+                function SetRepeatStrategy() {}
+                return SetRepeatStrategy.prototype.getCollectionObserver = function getCollectionObserver(observerLocator, items) {
+                    return observerLocator.getSetObserver(items);
+                }, SetRepeatStrategy.prototype.instanceChanged = function instanceChanged(repeat, items) {
+                    var _this = this, removePromise = repeat.removeAllViews(!0, !repeat.viewsRequireLifecycle);
+                    return removePromise instanceof Promise ? void removePromise.then(function() {
+                        return _this._standardProcessItems(repeat, items);
+                    }) : void this._standardProcessItems(repeat, items);
+                }, SetRepeatStrategy.prototype._standardProcessItems = function _standardProcessItems(repeat, items) {
+                    var index = 0, overrideContext = void 0;
+                    items.forEach(function(value) {
+                        overrideContext = (0, _repeatUtilities.createFullOverrideContext)(repeat, value, index, items.size), 
+                        repeat.addView(overrideContext.bindingContext, overrideContext), ++index;
+                    });
+                }, SetRepeatStrategy.prototype.instanceMutated = function instanceMutated(repeat, set, records) {
+                    var value = void 0, i = void 0, ii = void 0, overrideContext = void 0, removeIndex = void 0, record = void 0, rmPromises = [], viewOrPromise = void 0;
+                    for (i = 0, ii = records.length; i < ii; ++i) switch (record = records[i], value = record.value, 
+                    record.type) {
+                      case "add":
+                        overrideContext = (0, _repeatUtilities.createFullOverrideContext)(repeat, value, set.size - 1, set.size), 
+                        repeat.insertView(set.size - 1, overrideContext.bindingContext, overrideContext);
+                        break;
+
+                      case "delete":
+                        removeIndex = this._getViewIndexByValue(repeat, value), viewOrPromise = repeat.removeView(removeIndex, !0, !repeat.viewsRequireLifecycle), 
+                        viewOrPromise instanceof Promise && rmPromises.push(viewOrPromise);
+                        break;
+
+                      case "clear":
+                        repeat.removeAllViews(!0, !repeat.viewsRequireLifecycle);
+                        break;
+
+                      default:
+                        continue;
+                    }
+                    rmPromises.length > 0 ? Promise.all(rmPromises).then(function() {
+                        (0, _repeatUtilities.updateOverrideContexts)(repeat.views(), 0);
+                    }) : (0, _repeatUtilities.updateOverrideContexts)(repeat.views(), 0);
+                }, SetRepeatStrategy.prototype._getViewIndexByValue = function _getViewIndexByValue(repeat, value) {
+                    var i = void 0, ii = void 0, child = void 0;
+                    for (i = 0, ii = repeat.viewCount(); i < ii; ++i) if (child = repeat.view(i), child.bindingContext[repeat.local] === value) return i;
+                }, SetRepeatStrategy;
+            }();
+        }).call(exports, __webpack_require__("bluebird"));
+    },
+    /***/
+    28: /***/
+    function(module, exports, __webpack_require__) {
+        "use strict";
+        function _possibleConstructorReturn(self, call) {
+            if (!self) throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+            return !call || "object" != typeof call && "function" != typeof call ? self : call;
+        }
+        function _inherits(subClass, superClass) {
+            if ("function" != typeof superClass && null !== superClass) throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+            subClass.prototype = Object.create(superClass && superClass.prototype, {
+                constructor: {
+                    value: subClass,
+                    enumerable: !1,
+                    writable: !0,
+                    configurable: !0
+                }
+            }), superClass && (Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass);
+        }
+        function fixupCSSUrls(address, css) {
+            if ("string" != typeof css) throw new Error("Failed loading required CSS file: " + address);
+            return css.replace(cssUrlMatcher, function(match, p1) {
+                var quote = p1.charAt(0);
+                return "'" !== quote && '"' !== quote || (p1 = p1.substr(1, p1.length - 2)), "url('" + (0, 
+                _aureliaPath.relativeToFile)(p1, address) + "')";
+            });
+        }
+        function _createCSSResource(address) {
+            var _dec, _class, ViewCSS = (_dec = (0, _aureliaTemplating.resource)(new CSSResource(address)), 
+            _dec(_class = function(_CSSViewEngineHooks) {
+                function ViewCSS() {
+                    return _possibleConstructorReturn(this, _CSSViewEngineHooks.apply(this, arguments));
+                }
+                return _inherits(ViewCSS, _CSSViewEngineHooks), ViewCSS;
+            }(CSSViewEngineHooks)) || _class);
+            return ViewCSS;
+        }
+        Object.defineProperty(exports, "__esModule", {
+            value: !0
+        }), exports._createCSSResource = _createCSSResource;
+        var _aureliaTemplating = __webpack_require__(1), _aureliaLoader = __webpack_require__(9), _aureliaDependencyInjection = __webpack_require__(3), _aureliaPath = __webpack_require__(6), _aureliaPal = __webpack_require__(0), cssUrlMatcher = /url\((?!['"]data)([^)]+)\)/gi, CSSResource = function() {
+            function CSSResource(address) {
+                this.address = address, this._scoped = null, this._global = !1, this._alreadyGloballyInjected = !1;
+            }
+            return CSSResource.prototype.initialize = function initialize(container, target) {
+                this._scoped = new target(this);
+            }, CSSResource.prototype.register = function register(registry, name) {
+                "scoped" === name ? registry.registerViewEngineHooks(this._scoped) : this._global = !0;
+            }, CSSResource.prototype.load = function load(container) {
+                var _this = this;
+                return container.get(_aureliaLoader.Loader).loadText(this.address).catch(function(err) {
+                    return null;
+                }).then(function(text) {
+                    text = fixupCSSUrls(_this.address, text), _this._scoped.css = text, _this._global && (_this._alreadyGloballyInjected = !0, 
+                    _aureliaPal.DOM.injectStyles(text));
+                });
+            }, CSSResource;
+        }(), CSSViewEngineHooks = function() {
+            function CSSViewEngineHooks(owner) {
+                this.owner = owner, this.css = null;
+            }
+            return CSSViewEngineHooks.prototype.beforeCompile = function beforeCompile(content, resources, instruction) {
+                if (instruction.targetShadowDOM) _aureliaPal.DOM.injectStyles(this.css, content, !0); else if (_aureliaPal.FEATURE.scopedCSS) {
+                    var styleNode = _aureliaPal.DOM.injectStyles(this.css, content, !0);
+                    styleNode.setAttribute("scoped", "scoped");
+                } else this.owner._alreadyGloballyInjected || (_aureliaPal.DOM.injectStyles(this.css), 
+                this.owner._alreadyGloballyInjected = !0);
+            }, CSSViewEngineHooks;
+        }();
+    },
+    /***/
+    29: /***/
+    function(module, exports, __webpack_require__) {
+        "use strict";
+        function _createDynamicElement(name, viewUrl, bindableNames) {
+            for (var _dec, _dec2, _class, DynamicElement = (_dec = (0, _aureliaTemplating.customElement)(name), 
+            _dec2 = (0, _aureliaTemplating.useView)(viewUrl), _dec(_class = _dec2(_class = function() {
+                function DynamicElement() {}
+                return DynamicElement.prototype.bind = function bind(bindingContext) {
+                    this.$parent = bindingContext;
+                }, DynamicElement;
+            }()) || _class) || _class), i = 0, ii = bindableNames.length; i < ii; ++i) (0, _aureliaTemplating.bindable)(bindableNames[i])(DynamicElement);
+            return DynamicElement;
+        }
+        Object.defineProperty(exports, "__esModule", {
+            value: !0
+        }), exports._createDynamicElement = _createDynamicElement;
+        var _aureliaTemplating = __webpack_require__(1);
+    },
+    /***/
+    3: /***/
+    function(module, exports, __webpack_require__) {
+        "use strict";
+        function getDecoratorDependencies(target, name) {
+            var dependencies = target.inject;
+            if ("function" == typeof dependencies) throw new Error("Decorator " + name + ' cannot be used with "inject()".  Please use an array instead.');
+            return dependencies || (dependencies = _aureliaMetadata.metadata.getOwn(_aureliaMetadata.metadata.paramTypes, target).slice(), 
+            target.inject = dependencies), dependencies;
+        }
+        function lazy(keyValue) {
+            return function(target, key, index) {
+                var params = getDecoratorDependencies(target, "lazy");
+                params[index] = Lazy.of(keyValue);
+            };
+        }
+        function all(keyValue) {
+            return function(target, key, index) {
+                var params = getDecoratorDependencies(target, "all");
+                params[index] = All.of(keyValue);
+            };
+        }
+        function optional() {
+            var checkParentOrTarget = arguments.length <= 0 || void 0 === arguments[0] || arguments[0], deco = function deco(checkParent) {
+                return function(target, key, index) {
+                    var params = getDecoratorDependencies(target, "optional");
+                    params[index] = Optional.of(params[index], checkParent);
+                };
+            };
+            return deco("boolean" == typeof checkParentOrTarget ? checkParentOrTarget : !0);
+        }
+        function parent(target, key, index) {
+            var params = getDecoratorDependencies(target, "parent");
+            params[index] = Parent.of(params[index]);
+        }
+        function factory(keyValue, asValue) {
+            return function(target, key, index) {
+                var params = getDecoratorDependencies(target, "factory"), factory = Factory.of(keyValue);
+                params[index] = asValue ? factory.as(asValue) : factory;
+            };
+        }
+        function newInstance(asKeyOrTarget) {
+            for (var _len4 = arguments.length, dynamicDependencies = Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) dynamicDependencies[_key4 - 1] = arguments[_key4];
+            var deco = function deco(asKey) {
+                return function(target, key, index) {
+                    var params = getDecoratorDependencies(target, "newInstance");
+                    params[index] = NewInstance.of.apply(NewInstance, [ params[index] ].concat(dynamicDependencies)), 
+                    asKey && params[index].as(asKey);
+                };
+            };
+            return arguments.length >= 1 ? deco(asKeyOrTarget) : deco();
+        }
+        function invoker(value) {
+            return function(target) {
+                _aureliaMetadata.metadata.define(_aureliaMetadata.metadata.invoker, value, target);
+            };
+        }
+        function invokeAsFactory(potentialTarget) {
+            var deco = function deco(target) {
+                _aureliaMetadata.metadata.define(_aureliaMetadata.metadata.invoker, FactoryInvoker.instance, target);
+            };
+            return potentialTarget ? deco(potentialTarget) : deco;
+        }
+        function registration(value) {
+            return function(target) {
+                _aureliaMetadata.metadata.define(_aureliaMetadata.metadata.registration, value, target);
+            };
+        }
+        function transient(key) {
+            return registration(new TransientRegistration(key));
+        }
+        function singleton(keyOrRegisterInChild) {
+            var registerInChild = !(arguments.length <= 1 || void 0 === arguments[1]) && arguments[1];
+            return registration(new SingletonRegistration(keyOrRegisterInChild, registerInChild));
+        }
+        function validateKey(key) {
+            if (null === key || void 0 === key) throw new Error("key/value cannot be null or undefined. Are you trying to inject/register something that doesn't exist with DI?");
+        }
+        function invokeWithDynamicDependencies(container, fn, staticDependencies, dynamicDependencies) {
+            for (var i = staticDependencies.length, args = new Array(i); i--; ) args[i] = container.get(staticDependencies[i]);
+            return void 0 !== dynamicDependencies && (args = args.concat(dynamicDependencies)), 
+            Reflect.construct(fn, args);
+        }
+        function getDependencies(f) {
+            return f.hasOwnProperty("inject") ? "function" == typeof f.inject ? f.inject() : f.inject : [];
+        }
+        function autoinject(potentialTarget) {
+            var deco = function deco(target) {
+                var previousInject = target.inject, autoInject = _aureliaMetadata.metadata.getOwn(_aureliaMetadata.metadata.paramTypes, target) || _emptyParameters;
+                if (previousInject) for (var i = 0; i < autoInject.length; i++) if (previousInject[i] && previousInject[i] !== autoInject[i]) {
+                    var prevIndex = previousInject.indexOf(autoInject[i]);
+                    prevIndex > -1 && previousInject.splice(prevIndex, 1), previousInject.splice(prevIndex > -1 && prevIndex < i ? i - 1 : i, 0, autoInject[i]);
+                } else previousInject[i] || (previousInject[i] = autoInject[i]); else target.inject = autoInject;
+            };
+            return potentialTarget ? deco(potentialTarget) : deco;
+        }
+        function inject() {
+            for (var _len5 = arguments.length, rest = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) rest[_key5] = arguments[_key5];
+            return function(target, key, descriptor) {
+                if ("number" == typeof descriptor && 1 === rest.length) {
+                    var params = target.inject;
+                    if ("function" == typeof params) throw new Error('Decorator inject cannot be used with "inject()".  Please use an array instead.');
+                    return params || (params = _aureliaMetadata.metadata.getOwn(_aureliaMetadata.metadata.paramTypes, target).slice(), 
+                    target.inject = params), void (params[descriptor] = rest[0]);
+                }
+                if (descriptor) {
+                    var _fn = descriptor.value;
+                    _fn.inject = rest;
+                } else target.inject = rest;
+            };
+        }
+        Object.defineProperty(exports, "__esModule", {
+            value: !0
+        }), exports.Container = exports.InvocationHandler = exports._emptyParameters = exports.SingletonRegistration = exports.TransientRegistration = exports.FactoryInvoker = exports.NewInstance = exports.Factory = exports.StrategyResolver = exports.Parent = exports.Optional = exports.All = exports.Lazy = exports.resolver = void 0;
+        var _dec, _class, _dec2, _class3, _dec3, _class5, _dec4, _class7, _dec5, _class9, _dec6, _class11, _dec7, _class13, _classInvokers;
+        exports.getDecoratorDependencies = getDecoratorDependencies, exports.lazy = lazy, 
+        exports.all = all, exports.optional = optional, exports.parent = parent, exports.factory = factory, 
+        exports.newInstance = newInstance, exports.invoker = invoker, exports.invokeAsFactory = invokeAsFactory, 
+        exports.registration = registration, exports.transient = transient, exports.singleton = singleton, 
+        exports.autoinject = autoinject, exports.inject = inject;
+        var _aureliaMetadata = __webpack_require__(4), _aureliaPal = __webpack_require__(0), resolver = exports.resolver = _aureliaMetadata.protocol.create("aurelia:resolver", function(target) {
+            return "function" == typeof target.get || "Resolvers must implement: get(container: Container, key: any): any";
+        }), Lazy = exports.Lazy = (_dec = resolver(), _dec(_class = function() {
+            function Lazy(key) {
+                this._key = key;
+            }
+            return Lazy.prototype.get = function get(container) {
+                var _this = this;
+                return function() {
+                    return container.get(_this._key);
+                };
+            }, Lazy.of = function of(key) {
+                return new Lazy(key);
+            }, Lazy;
+        }()) || _class), All = exports.All = (_dec2 = resolver(), _dec2(_class3 = function() {
+            function All(key) {
+                this._key = key;
+            }
+            return All.prototype.get = function get(container) {
+                return container.getAll(this._key);
+            }, All.of = function of(key) {
+                return new All(key);
+            }, All;
+        }()) || _class3), Optional = exports.Optional = (_dec3 = resolver(), _dec3(_class5 = function() {
+            function Optional(key) {
+                var checkParent = arguments.length <= 1 || void 0 === arguments[1] || arguments[1];
+                this._key = key, this._checkParent = checkParent;
+            }
+            return Optional.prototype.get = function get(container) {
+                return container.hasResolver(this._key, this._checkParent) ? container.get(this._key) : null;
+            }, Optional.of = function of(key) {
+                var checkParent = arguments.length <= 1 || void 0 === arguments[1] || arguments[1];
+                return new Optional(key, checkParent);
+            }, Optional;
+        }()) || _class5), Parent = exports.Parent = (_dec4 = resolver(), _dec4(_class7 = function() {
+            function Parent(key) {
+                this._key = key;
+            }
+            return Parent.prototype.get = function get(container) {
+                return container.parent ? container.parent.get(this._key) : null;
+            }, Parent.of = function of(key) {
+                return new Parent(key);
+            }, Parent;
+        }()) || _class7), StrategyResolver = exports.StrategyResolver = (_dec5 = resolver(), 
+        _dec5(_class9 = function() {
+            function StrategyResolver(strategy, state) {
+                this.strategy = strategy, this.state = state;
+            }
+            return StrategyResolver.prototype.get = function get(container, key) {
+                switch (this.strategy) {
+                  case 0:
+                    return this.state;
+
+                  case 1:
+                    var singleton = container.invoke(this.state);
+                    return this.state = singleton, this.strategy = 0, singleton;
+
+                  case 2:
+                    return container.invoke(this.state);
+
+                  case 3:
+                    return this.state(container, key, this);
+
+                  case 4:
+                    return this.state[0].get(container, key);
+
+                  case 5:
+                    return container.get(this.state);
+
+                  default:
+                    throw new Error("Invalid strategy: " + this.strategy);
+                }
+            }, StrategyResolver;
+        }()) || _class9), Factory = exports.Factory = (_dec6 = resolver(), _dec6(_class11 = function() {
+            function Factory(key) {
+                this._key = key;
+            }
+            return Factory.prototype.get = function get(container) {
+                var _this2 = this;
+                return function() {
+                    for (var _len = arguments.length, rest = Array(_len), _key = 0; _key < _len; _key++) rest[_key] = arguments[_key];
+                    return container.invoke(_this2._key, rest);
+                };
+            }, Factory.of = function of(key) {
+                return new Factory(key);
+            }, Factory;
+        }()) || _class11), NewInstance = exports.NewInstance = (_dec7 = resolver(), _dec7(_class13 = function() {
+            function NewInstance(key) {
+                this.key = key, this.asKey = key;
+                for (var _len2 = arguments.length, dynamicDependencies = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) dynamicDependencies[_key2 - 1] = arguments[_key2];
+                this.dynamicDependencies = dynamicDependencies;
+            }
+            return NewInstance.prototype.get = function get(container) {
+                var dynamicDependencies = this.dynamicDependencies.length > 0 ? this.dynamicDependencies.map(function(dependency) {
+                    return dependency["protocol:aurelia:resolver"] ? dependency.get(container) : container.get(dependency);
+                }) : void 0, instance = container.invoke(this.key, dynamicDependencies);
+                return container.registerInstance(this.asKey, instance), instance;
+            }, NewInstance.prototype.as = function as(key) {
+                return this.asKey = key, this;
+            }, NewInstance.of = function of(key) {
+                for (var _len3 = arguments.length, dynamicDependencies = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) dynamicDependencies[_key3 - 1] = arguments[_key3];
+                return new (Function.prototype.bind.apply(NewInstance, [ null ].concat([ key ], dynamicDependencies)))();
+            }, NewInstance;
+        }()) || _class13), FactoryInvoker = exports.FactoryInvoker = function() {
+            function FactoryInvoker() {}
+            return FactoryInvoker.prototype.invoke = function invoke(container, fn, dependencies) {
+                for (var i = dependencies.length, args = new Array(i); i--; ) args[i] = container.get(dependencies[i]);
+                return fn.apply(void 0, args);
+            }, FactoryInvoker.prototype.invokeWithDynamicDependencies = function invokeWithDynamicDependencies(container, fn, staticDependencies, dynamicDependencies) {
+                for (var i = staticDependencies.length, args = new Array(i); i--; ) args[i] = container.get(staticDependencies[i]);
+                return void 0 !== dynamicDependencies && (args = args.concat(dynamicDependencies)), 
+                fn.apply(void 0, args);
+            }, FactoryInvoker;
+        }();
+        FactoryInvoker.instance = new FactoryInvoker();
+        var TransientRegistration = exports.TransientRegistration = function() {
+            function TransientRegistration(key) {
+                this._key = key;
+            }
+            return TransientRegistration.prototype.registerResolver = function registerResolver(container, key, fn) {
+                return container.registerTransient(this._key || key, fn);
+            }, TransientRegistration;
+        }(), SingletonRegistration = exports.SingletonRegistration = function() {
+            function SingletonRegistration(keyOrRegisterInChild) {
+                var registerInChild = !(arguments.length <= 1 || void 0 === arguments[1]) && arguments[1];
+                "boolean" == typeof keyOrRegisterInChild ? this._registerInChild = keyOrRegisterInChild : (this._key = keyOrRegisterInChild, 
+                this._registerInChild = registerInChild);
+            }
+            return SingletonRegistration.prototype.registerResolver = function registerResolver(container, key, fn) {
+                return this._registerInChild ? container.registerSingleton(this._key || key, fn) : container.root.registerSingleton(this._key || key, fn);
+            }, SingletonRegistration;
+        }(), _emptyParameters = exports._emptyParameters = Object.freeze([]);
+        _aureliaMetadata.metadata.registration = "aurelia:registration", _aureliaMetadata.metadata.invoker = "aurelia:invoker";
+        var resolverDecorates = resolver.decorates, InvocationHandler = exports.InvocationHandler = function() {
+            function InvocationHandler(fn, invoker, dependencies) {
+                this.fn = fn, this.invoker = invoker, this.dependencies = dependencies;
+            }
+            return InvocationHandler.prototype.invoke = function invoke(container, dynamicDependencies) {
+                return void 0 !== dynamicDependencies ? this.invoker.invokeWithDynamicDependencies(container, this.fn, this.dependencies, dynamicDependencies) : this.invoker.invoke(container, this.fn, this.dependencies);
+            }, InvocationHandler;
+        }(), classInvokers = (_classInvokers = {}, _classInvokers[0] = {
+            invoke: function invoke(container, Type) {
+                return new Type();
+            },
+            invokeWithDynamicDependencies: invokeWithDynamicDependencies
+        }, _classInvokers[1] = {
+            invoke: function invoke(container, Type, deps) {
+                return new Type(container.get(deps[0]));
+            },
+            invokeWithDynamicDependencies: invokeWithDynamicDependencies
+        }, _classInvokers[2] = {
+            invoke: function invoke(container, Type, deps) {
+                return new Type(container.get(deps[0]), container.get(deps[1]));
+            },
+            invokeWithDynamicDependencies: invokeWithDynamicDependencies
+        }, _classInvokers[3] = {
+            invoke: function invoke(container, Type, deps) {
+                return new Type(container.get(deps[0]), container.get(deps[1]), container.get(deps[2]));
+            },
+            invokeWithDynamicDependencies: invokeWithDynamicDependencies
+        }, _classInvokers[4] = {
+            invoke: function invoke(container, Type, deps) {
+                return new Type(container.get(deps[0]), container.get(deps[1]), container.get(deps[2]), container.get(deps[3]));
+            },
+            invokeWithDynamicDependencies: invokeWithDynamicDependencies
+        }, _classInvokers[5] = {
+            invoke: function invoke(container, Type, deps) {
+                return new Type(container.get(deps[0]), container.get(deps[1]), container.get(deps[2]), container.get(deps[3]), container.get(deps[4]));
+            },
+            invokeWithDynamicDependencies: invokeWithDynamicDependencies
+        }, _classInvokers.fallback = {
+            invoke: invokeWithDynamicDependencies,
+            invokeWithDynamicDependencies: invokeWithDynamicDependencies
+        }, _classInvokers), Container = exports.Container = function() {
+            function Container(configuration) {
+                void 0 === configuration && (configuration = {}), this._configuration = configuration, 
+                this._onHandlerCreated = configuration.onHandlerCreated, this._handlers = configuration.handlers || (configuration.handlers = new Map()), 
+                this._resolvers = new Map(), this.root = this, this.parent = null;
+            }
+            return Container.prototype.makeGlobal = function makeGlobal() {
+                return Container.instance = this, this;
+            }, Container.prototype.setHandlerCreatedCallback = function setHandlerCreatedCallback(onHandlerCreated) {
+                this._onHandlerCreated = onHandlerCreated, this._configuration.onHandlerCreated = onHandlerCreated;
+            }, Container.prototype.registerInstance = function registerInstance(key, instance) {
+                return this.registerResolver(key, new StrategyResolver(0, void 0 === instance ? key : instance));
+            }, Container.prototype.registerSingleton = function registerSingleton(key, fn) {
+                return this.registerResolver(key, new StrategyResolver(1, void 0 === fn ? key : fn));
+            }, Container.prototype.registerTransient = function registerTransient(key, fn) {
+                return this.registerResolver(key, new StrategyResolver(2, void 0 === fn ? key : fn));
+            }, Container.prototype.registerHandler = function registerHandler(key, handler) {
+                return this.registerResolver(key, new StrategyResolver(3, handler));
+            }, Container.prototype.registerAlias = function registerAlias(originalKey, aliasKey) {
+                return this.registerResolver(aliasKey, new StrategyResolver(5, originalKey));
+            }, Container.prototype.registerResolver = function registerResolver(key, resolver) {
+                validateKey(key);
+                var allResolvers = this._resolvers, result = allResolvers.get(key);
+                return void 0 === result ? allResolvers.set(key, resolver) : 4 === result.strategy ? result.state.push(resolver) : allResolvers.set(key, new StrategyResolver(4, [ result, resolver ])), 
+                resolver;
+            }, Container.prototype.autoRegister = function autoRegister(key, fn) {
+                if (fn = void 0 === fn ? key : fn, "function" == typeof fn) {
+                    var _registration = _aureliaMetadata.metadata.get(_aureliaMetadata.metadata.registration, fn);
+                    return void 0 === _registration ? this.registerResolver(key, new StrategyResolver(1, fn)) : _registration.registerResolver(this, key, fn);
+                }
+                return this.registerResolver(key, new StrategyResolver(0, fn));
+            }, Container.prototype.autoRegisterAll = function autoRegisterAll(fns) {
+                for (var i = fns.length; i--; ) this.autoRegister(fns[i]);
+            }, Container.prototype.unregister = function unregister(key) {
+                this._resolvers.delete(key);
+            }, Container.prototype.hasResolver = function hasResolver(key) {
+                var checkParent = !(arguments.length <= 1 || void 0 === arguments[1]) && arguments[1];
+                return validateKey(key), this._resolvers.has(key) || checkParent && null !== this.parent && this.parent.hasResolver(key, checkParent);
+            }, Container.prototype.get = function get(key) {
+                if (validateKey(key), key === Container) return this;
+                if (resolverDecorates(key)) return key.get(this, key);
+                var resolver = this._resolvers.get(key);
+                return void 0 === resolver ? null === this.parent ? this.autoRegister(key).get(this, key) : this.parent._get(key) : resolver.get(this, key);
+            }, Container.prototype._get = function _get(key) {
+                var resolver = this._resolvers.get(key);
+                return void 0 === resolver ? null === this.parent ? this.autoRegister(key).get(this, key) : this.parent._get(key) : resolver.get(this, key);
+            }, Container.prototype.getAll = function getAll(key) {
+                validateKey(key);
+                var resolver = this._resolvers.get(key);
+                if (void 0 === resolver) return null === this.parent ? _emptyParameters : this.parent.getAll(key);
+                if (4 === resolver.strategy) {
+                    for (var state = resolver.state, i = state.length, results = new Array(i); i--; ) results[i] = state[i].get(this, key);
+                    return results;
+                }
+                return [ resolver.get(this, key) ];
+            }, Container.prototype.createChild = function createChild() {
+                var child = new Container(this._configuration);
+                return child.root = this.root, child.parent = this, child;
+            }, Container.prototype.invoke = function invoke(fn, dynamicDependencies) {
+                try {
+                    var _handler = this._handlers.get(fn);
+                    return void 0 === _handler && (_handler = this._createInvocationHandler(fn), this._handlers.set(fn, _handler)), 
+                    _handler.invoke(this, dynamicDependencies);
+                } catch (e) {
+                    throw new _aureliaPal.AggregateError("Error invoking " + fn.name + ". Check the inner error for details.", e, !0);
+                }
+            }, Container.prototype._createInvocationHandler = function _createInvocationHandler(fn) {
+                var dependencies = void 0;
+                if (void 0 === fn.inject) dependencies = _aureliaMetadata.metadata.getOwn(_aureliaMetadata.metadata.paramTypes, fn) || _emptyParameters; else {
+                    dependencies = [];
+                    for (var ctor = fn; "function" == typeof ctor; ) {
+                        var _dependencies;
+                        (_dependencies = dependencies).push.apply(_dependencies, getDependencies(ctor)), 
+                        ctor = Object.getPrototypeOf(ctor);
+                    }
+                }
+                var invoker = _aureliaMetadata.metadata.getOwn(_aureliaMetadata.metadata.invoker, fn) || classInvokers[dependencies.length] || classInvokers.fallback, handler = new InvocationHandler(fn, invoker, dependencies);
+                return void 0 !== this._onHandlerCreated ? this._onHandlerCreated(handler) : handler;
+            }, Container;
+        }();
+    },
+    /***/
     30: /***/
     function(module, exports, __webpack_require__) {
         "use strict";
@@ -5657,7 +5657,7 @@
         Object.defineProperty(exports, "__esModule", {
             value: !0
         }), exports.TemplatingRouteLoader = void 0;
-        var _dec, _class, _aureliaDependencyInjection = __webpack_require__(2), _aureliaTemplating = __webpack_require__(1), _aureliaRouter = __webpack_require__("aurelia-router"), _aureliaPath = __webpack_require__(6), _aureliaMetadata = __webpack_require__(4), TemplatingRouteLoader = exports.TemplatingRouteLoader = (_dec = (0, 
+        var _dec, _class, _aureliaDependencyInjection = __webpack_require__(3), _aureliaTemplating = __webpack_require__(1), _aureliaRouter = __webpack_require__("aurelia-router"), _aureliaPath = __webpack_require__(6), _aureliaMetadata = __webpack_require__(4), TemplatingRouteLoader = exports.TemplatingRouteLoader = (_dec = (0, 
         _aureliaDependencyInjection.inject)(_aureliaTemplating.CompositionEngine), _dec(_class = function(_RouteLoader) {
             function TemplatingRouteLoader(compositionEngine) {
                 var _this = _possibleConstructorReturn(this, _RouteLoader.call(this));
@@ -5839,7 +5839,7 @@
     /***/
     40: /***/
     function(module, exports, __webpack_require__) {
-        __webpack_require__("aurelia-bootstrapper-webpack"), __webpack_require__(3), __webpack_require__(2), 
+        __webpack_require__("aurelia-bootstrapper-webpack"), __webpack_require__(2), __webpack_require__(3), 
         __webpack_require__("aurelia-event-aggregator"), __webpack_require__("aurelia-framework"), 
         __webpack_require__(12), __webpack_require__("aurelia-history-browser"), __webpack_require__(9), 
         __webpack_require__("aurelia-loader-webpack"), __webpack_require__(5), __webpack_require__("aurelia-logging-console"), 
@@ -5888,9 +5888,13 @@
             globalDefaultLevel = level;
             for (var key in loggers) loggers[key].setLevel(level);
         }
+        function getLevel() {
+            return globalDefaultLevel;
+        }
         Object.defineProperty(exports, "__esModule", {
             value: !0
-        }), exports.getLogger = getLogger, exports.addAppender = addAppender, exports.setLevel = setLevel;
+        }), exports.getLogger = getLogger, exports.addAppender = addAppender, exports.setLevel = setLevel, 
+        exports.getLevel = getLevel;
         var logLevel = exports.logLevel = {
             none: 0,
             error: 1,
@@ -6135,7 +6139,7 @@
         exports.updateOverrideContext = updateOverrideContext, exports.getItemsSourceExpression = getItemsSourceExpression, 
         exports.unwrapExpression = unwrapExpression, exports.isOneTime = isOneTime, exports.updateOneTimeBinding = updateOneTimeBinding, 
         exports.indexOf = indexOf;
-        var _aureliaBinding = __webpack_require__(3), oneTime = _aureliaBinding.bindingMode.oneTime;
+        var _aureliaBinding = __webpack_require__(2), oneTime = _aureliaBinding.bindingMode.oneTime;
     },
     /***/
     9: /***/
@@ -6293,6 +6297,20 @@
             if (null != obj) for (var key in obj) Object.prototype.hasOwnProperty.call(obj, key) && (newObj[key] = obj[key]);
             return newObj.default = obj, newObj;
         }
+        function invokeCallback(callback, data, event) {
+            try {
+                callback(data, event);
+            } catch (e) {
+                logger.error(e);
+            }
+        }
+        function invokeHandler(handler, data) {
+            try {
+                handler.handle(data);
+            } catch (e) {
+                logger.error(e);
+            }
+        }
         function includeEventsIn(obj) {
             var ea = new EventAggregator();
             return obj.subscribeOnce = function(event, callback) {
@@ -6325,22 +6343,9 @@
                 var subscribers = void 0, i = void 0;
                 if (!event) throw new Error("Event was invalid.");
                 if ("string" == typeof event) {
-                    if (subscribers = this.eventLookup[event]) {
-                        subscribers = subscribers.slice(), i = subscribers.length;
-                        try {
-                            for (;i--; ) subscribers[i](data, event);
-                        } catch (e) {
-                            logger.error(e);
-                        }
-                    }
-                } else {
-                    subscribers = this.messageHandlers.slice(), i = subscribers.length;
-                    try {
-                        for (;i--; ) subscribers[i].handle(event);
-                    } catch (e) {
-                        logger.error(e);
-                    }
-                }
+                    if (subscribers = this.eventLookup[event]) for (subscribers = subscribers.slice(), 
+                    i = subscribers.length; i--; ) invokeCallback(subscribers[i], data, event);
+                } else for (subscribers = this.messageHandlers.slice(), i = subscribers.length; i--; ) invokeHandler(subscribers[i], event);
             }, EventAggregator.prototype.subscribe = function subscribe(event, callback) {
                 var handler = void 0, subscribers = void 0;
                 if (!event) throw new Error("Event channel/type was invalid.");
@@ -6437,7 +6442,7 @@
             Object.defineProperty(exports, "__esModule", {
                 value: !0
             }), exports.LogManager = exports.FrameworkConfiguration = exports.Aurelia = void 0;
-            var _aureliaDependencyInjection = __webpack_require__(2);
+            var _aureliaDependencyInjection = __webpack_require__(3);
             Object.keys(_aureliaDependencyInjection).forEach(function(key) {
                 "default" !== key && "__esModule" !== key && Object.defineProperty(exports, key, {
                     enumerable: !0,
@@ -6446,7 +6451,7 @@
                     }
                 });
             });
-            var _aureliaBinding = __webpack_require__(3);
+            var _aureliaBinding = __webpack_require__(2);
             Object.keys(_aureliaBinding).forEach(function(key) {
                 "default" !== key && "__esModule" !== key && Object.defineProperty(exports, key, {
                     enumerable: !0,
@@ -8228,7 +8233,10 @@
                 previousLocation ? router.navigate(router.history.previousLocation, {
                     trigger: !1,
                     replace: !0
-                }) : logger.error("Router navigation failed, and no previous location could be restored.");
+                }) : router.fallbackRoute ? router.navigate(router.fallbackRoute, {
+                    trigger: !0,
+                    replace: !0
+                }) : logger.error("Router navigation failed, and no previous location or fallbackRoute could be restored.");
             }
             Object.defineProperty(exports, "__esModule", {
                 value: !0
@@ -8253,7 +8261,7 @@
             exports._normalizeAbsolutePath = _normalizeAbsolutePath, exports._createRootedPath = _createRootedPath, 
             exports._resolveUrl = _resolveUrl, exports.isNavigationCommand = isNavigationCommand, 
             exports._buildNavigationPlan = _buildNavigationPlan;
-            var _aureliaLogging = __webpack_require__(5), LogManager = _interopRequireWildcard(_aureliaLogging), _aureliaRouteRecognizer = __webpack_require__("aurelia-route-recognizer"), _aureliaDependencyInjection = __webpack_require__(2), _aureliaHistory = __webpack_require__(12), _aureliaEventAggregator = __webpack_require__("aurelia-event-aggregator"), isRootedPath = /^#?\//, isAbsoluteUrl = /^([a-z][a-z0-9+\-.]*:)?\/\//i, pipelineStatus = exports.pipelineStatus = {
+            var _aureliaLogging = __webpack_require__(5), LogManager = _interopRequireWildcard(_aureliaLogging), _aureliaRouteRecognizer = __webpack_require__("aurelia-route-recognizer"), _aureliaDependencyInjection = __webpack_require__(3), _aureliaHistory = __webpack_require__(12), _aureliaEventAggregator = __webpack_require__("aurelia-event-aggregator"), isRootedPath = /^#?\//, isAbsoluteUrl = /^([a-z][a-z0-9+\-.]*:)?\/\//i, pipelineStatus = exports.pipelineStatus = {
                 completed: "completed",
                 canceled: "canceled",
                 rejected: "rejected",
@@ -8366,7 +8374,8 @@
                     var title = this._buildTitle();
                     title && this.router.history.setTitle(title);
                 }, NavigationInstruction.prototype._buildTitle = function _buildTitle() {
-                    var separator = arguments.length <= 0 || void 0 === arguments[0] ? " | " : arguments[0], title = this.config.navModel.title || "", childTitles = [];
+                    var separator = arguments.length <= 0 || void 0 === arguments[0] ? " | " : arguments[0], title = "", childTitles = [];
+                    this.config.navModel.title && (title = this.router.transformTitle(this.config.navModel.title));
                     for (var viewPortName in this.viewPortInstructions) {
                         var _viewPortInstruction = this.viewPortInstructions[viewPortName];
                         if (_viewPortInstruction.childNavigationInstruction) {
@@ -8375,7 +8384,8 @@
                         }
                     }
                     return childTitles.length && (title = childTitles.join(separator) + (title ? separator : "") + title), 
-                    this.router.title && (title += (title ? separator : "") + this.router.title), title;
+                    this.router.title && (title += (title ? separator : "") + this.router.transformTitle(this.router.title)), 
+                    title;
                 }, NavigationInstruction;
             }(), NavModel = exports.NavModel = function() {
                 function NavModel(router, relativeHref) {
@@ -8430,6 +8440,8 @@
                     return this.addPipelineStep("preRender", step);
                 }, RouterConfiguration.prototype.addPostRenderStep = function addPostRenderStep(step) {
                     return this.addPipelineStep("postRender", step);
+                }, RouterConfiguration.prototype.fallbackRoute = function fallbackRoute(fragment) {
+                    return this._fallbackRoute = fragment, this;
                 }, RouterConfiguration.prototype.map = function map(route) {
                     return Array.isArray(route) ? (route.forEach(this.map.bind(this)), this) : this.mapRoute(route);
                 }, RouterConfiguration.prototype.mapRoute = function mapRoute(config) {
@@ -8450,7 +8462,7 @@
                 }, RouterConfiguration.prototype.exportToRouter = function exportToRouter(router) {
                     for (var instructions = this.instructions, i = 0, ii = instructions.length; i < ii; ++i) instructions[i](router);
                     this.title && (router.title = this.title), this.unknownRouteConfig && router.handleUnknownRoutes(this.unknownRouteConfig), 
-                    router.options = this.options;
+                    this._fallbackRoute && (router.fallbackRoute = this._fallbackRoute), router.options = this.options;
                     var pipelineSteps = this.pipelineSteps;
                     if (pipelineSteps.length) {
                         if (!router.isRoot) throw new Error("Pipeline steps can only be added to the root router");
@@ -8473,29 +8485,31 @@
                 }, BuildNavigationPlanStep;
             }(), Router = exports.Router = function() {
                 function Router(container, history) {
-                    this.parent = null, this.options = {}, this.container = container, this.history = history, 
-                    this.reset();
+                    var _this2 = this;
+                    this.parent = null, this.options = {}, this.transformTitle = function(title) {
+                        return _this2.parent ? _this2.parent.transformTitle(title) : title;
+                    }, this.container = container, this.history = history, this.reset();
                 }
                 return Router.prototype.reset = function reset() {
-                    var _this2 = this;
+                    var _this3 = this;
                     this.viewPorts = {}, this.routes = [], this.baseUrl = "", this.isConfigured = !1, 
                     this.isNavigating = !1, this.navigation = [], this.currentInstruction = null, this._fallbackOrder = 100, 
                     this._recognizer = new _aureliaRouteRecognizer.RouteRecognizer(), this._childRecognizer = new _aureliaRouteRecognizer.RouteRecognizer(), 
                     this._configuredPromise = new Promise(function(resolve) {
-                        _this2._resolveConfiguredPromise = resolve;
+                        _this3._resolveConfiguredPromise = resolve;
                     });
                 }, Router.prototype.registerViewPort = function registerViewPort(viewPort, name) {
                     name = name || "default", this.viewPorts[name] = viewPort;
                 }, Router.prototype.ensureConfigured = function ensureConfigured() {
                     return this._configuredPromise;
                 }, Router.prototype.configure = function configure(callbackOrConfig) {
-                    var _this3 = this;
+                    var _this4 = this;
                     this.isConfigured = !0;
                     var result = callbackOrConfig, config = void 0;
                     return "function" == typeof callbackOrConfig && (config = new RouterConfiguration(), 
                     result = callbackOrConfig(config)), Promise.resolve(result).then(function(c) {
-                        c && c.exportToRouter && (config = c), config.exportToRouter(_this3), _this3.isConfigured = !0, 
-                        _this3._resolveConfiguredPromise();
+                        c && c.exportToRouter && (config = c), config.exportToRouter(_this4), _this4.isConfigured = !0, 
+                        _this4._resolveConfiguredPromise();
                     });
                 }, Router.prototype.navigate = function navigate(fragment, options) {
                     return !this.isConfigured && this.parent ? this.parent.navigate(fragment, options) : this.history.navigate(_resolveUrl(fragment, this.baseUrl, this.history._hasPushState), options);
@@ -8554,10 +8568,10 @@
                 }, Router.prototype.hasOwnRoute = function hasOwnRoute(name) {
                     return this._recognizer.hasRoute(name);
                 }, Router.prototype.handleUnknownRoutes = function handleUnknownRoutes(config) {
-                    var _this4 = this;
+                    var _this5 = this;
                     if (!config) throw new Error("Invalid unknown route handler");
                     this.catchAllHandler = function(instruction) {
-                        return _this4._createRouteConfig(config, instruction).then(function(c) {
+                        return _this5._createRouteConfig(config, instruction).then(function(c) {
                             return instruction.config = c, instruction;
                         });
                     };
@@ -8609,7 +8623,7 @@
                     }
                     return Promise.reject(new Error("Route not found: " + url));
                 }, Router.prototype._createRouteConfig = function _createRouteConfig(config, instruction) {
-                    var _this5 = this;
+                    var _this6 = this;
                     return Promise.resolve(config).then(function(c) {
                         return "string" == typeof c ? {
                             moduleId: c
@@ -8619,8 +8633,8 @@
                             moduleId: c
                         } : c;
                     }).then(function(c) {
-                        return c.route = instruction.params.path, validateRouteConfig(c, _this5.routes), 
-                        c.navModel || (c.navModel = _this5.createNavModel(c)), c;
+                        return c.route = instruction.params.path, validateRouteConfig(c, _this6.routes), 
+                        c.navModel || (c.navModel = _this6.createNavModel(c)), c;
                     });
                 }, _createClass(Router, [ {
                     key: "isRoot",
@@ -8679,9 +8693,9 @@
                     this.steps = [], this.container = container, this.slotName = name, this.slotAlias = alias;
                 }
                 return PipelineSlot.prototype.getSteps = function getSteps() {
-                    var _this6 = this;
+                    var _this7 = this;
                     return this.steps.map(function(x) {
-                        return _this6.container.get(x);
+                        return _this7.container.get(x);
                     });
                 }, PipelineSlot;
             }(), PipelineProvider = exports.PipelineProvider = function() {
@@ -8691,9 +8705,9 @@
                 return PipelineProvider.inject = function inject() {
                     return [ _aureliaDependencyInjection.Container ];
                 }, PipelineProvider.prototype.createPipeline = function createPipeline() {
-                    var _this7 = this, pipeline = new Pipeline();
+                    var _this8 = this, pipeline = new Pipeline();
                     return this.steps.forEach(function(step) {
-                        return pipeline.addStep(_this7.container.get(step));
+                        return pipeline.addStep(_this8.container.get(step));
                     }), pipeline;
                 }, PipelineProvider.prototype._findStep = function _findStep(name) {
                     return this.steps.find(function(x) {
@@ -8717,42 +8731,42 @@
                 }, PipelineProvider;
             }(), logger = LogManager.getLogger("app-router"), AppRouter = exports.AppRouter = function(_Router) {
                 function AppRouter(container, history, pipelineProvider, events) {
-                    var _this8 = _possibleConstructorReturn(this, _Router.call(this, container, history));
-                    return _this8.pipelineProvider = pipelineProvider, _this8.events = events, _this8;
+                    var _this9 = _possibleConstructorReturn(this, _Router.call(this, container, history));
+                    return _this9.pipelineProvider = pipelineProvider, _this9.events = events, _this9;
                 }
                 return _inherits(AppRouter, _Router), AppRouter.inject = function inject() {
                     return [ _aureliaDependencyInjection.Container, _aureliaHistory.History, PipelineProvider, _aureliaEventAggregator.EventAggregator ];
                 }, AppRouter.prototype.reset = function reset() {
                     _Router.prototype.reset.call(this), this.maxInstructionCount = 10, this._queue ? this._queue.length = 0 : this._queue = [];
                 }, AppRouter.prototype.loadUrl = function loadUrl(url) {
-                    var _this9 = this;
+                    var _this10 = this;
                     return this._createNavigationInstruction(url).then(function(instruction) {
-                        return _this9._queueInstruction(instruction);
+                        return _this10._queueInstruction(instruction);
                     }).catch(function(error) {
-                        logger.error(error), restorePreviousLocation(_this9);
+                        logger.error(error), restorePreviousLocation(_this10);
                     });
                 }, AppRouter.prototype.registerViewPort = function registerViewPort(viewPort, name) {
-                    var _this10 = this;
+                    var _this11 = this;
                     if (_Router.prototype.registerViewPort.call(this, viewPort, name), this.isActive) this._dequeueInstruction(); else {
                         var _ret6 = function() {
-                            var viewModel = _this10._findViewModel(viewPort);
+                            var viewModel = _this11._findViewModel(viewPort);
                             if ("configureRouter" in viewModel) {
-                                if (!_this10.isConfigured) {
+                                if (!_this11.isConfigured) {
                                     var _ret7 = function() {
-                                        var resolveConfiguredPromise = _this10._resolveConfiguredPromise;
-                                        return _this10._resolveConfiguredPromise = function() {}, {
+                                        var resolveConfiguredPromise = _this11._resolveConfiguredPromise;
+                                        return _this11._resolveConfiguredPromise = function() {}, {
                                             v: {
-                                                v: _this10.configure(function(config) {
-                                                    return viewModel.configureRouter(config, _this10);
+                                                v: _this11.configure(function(config) {
+                                                    return viewModel.configureRouter(config, _this11);
                                                 }).then(function() {
-                                                    _this10.activate(), resolveConfiguredPromise();
+                                                    _this11.activate(), resolveConfiguredPromise();
                                                 })
                                             }
                                         };
                                     }();
                                     if ("object" === ("undefined" == typeof _ret7 ? "undefined" : _typeof(_ret7))) return _ret7.v;
                                 }
-                            } else _this10.activate();
+                            } else _this11.activate();
                         }();
                         if ("object" === ("undefined" == typeof _ret6 ? "undefined" : _typeof(_ret6))) return _ret6.v;
                     }
@@ -8764,33 +8778,33 @@
                 }, AppRouter.prototype.deactivate = function deactivate() {
                     this.isActive = !1, this.history.deactivate();
                 }, AppRouter.prototype._queueInstruction = function _queueInstruction(instruction) {
-                    var _this11 = this;
+                    var _this12 = this;
                     return new Promise(function(resolve) {
-                        instruction.resolve = resolve, _this11._queue.unshift(instruction), _this11._dequeueInstruction();
+                        instruction.resolve = resolve, _this12._queue.unshift(instruction), _this12._dequeueInstruction();
                     });
                 }, AppRouter.prototype._dequeueInstruction = function _dequeueInstruction() {
-                    var _this12 = this, instructionCount = arguments.length <= 0 || void 0 === arguments[0] ? 0 : arguments[0];
+                    var _this13 = this, instructionCount = arguments.length <= 0 || void 0 === arguments[0] ? 0 : arguments[0];
                     return Promise.resolve().then(function() {
-                        if (!_this12.isNavigating || instructionCount) {
-                            var instruction = _this12._queue.shift();
-                            if (_this12._queue.length = 0, instruction) {
-                                if (_this12.isNavigating = !0, instruction.previousInstruction = _this12.currentInstruction, 
+                        if (!_this13.isNavigating || instructionCount) {
+                            var instruction = _this13._queue.shift();
+                            if (_this13._queue.length = 0, instruction) {
+                                if (_this13.isNavigating = !0, instruction.previousInstruction = _this13.currentInstruction, 
                                 instructionCount) {
-                                    if (instructionCount === _this12.maxInstructionCount - 1) return logger.error(instructionCount + 1 + " navigation instructions have been attempted without success. Restoring last known good location."), 
-                                    restorePreviousLocation(_this12), _this12._dequeueInstruction(instructionCount + 1);
-                                    if (instructionCount > _this12.maxInstructionCount) throw new Error("Maximum navigation attempts exceeded. Giving up.");
-                                } else _this12.events.publish("router:navigation:processing", {
+                                    if (instructionCount === _this13.maxInstructionCount - 1) return logger.error(instructionCount + 1 + " navigation instructions have been attempted without success. Restoring last known good location."), 
+                                    restorePreviousLocation(_this13), _this13._dequeueInstruction(instructionCount + 1);
+                                    if (instructionCount > _this13.maxInstructionCount) throw new Error("Maximum navigation attempts exceeded. Giving up.");
+                                } else _this13.events.publish("router:navigation:processing", {
                                     instruction: instruction
                                 });
-                                var pipeline = _this12.pipelineProvider.createPipeline();
+                                var pipeline = _this13.pipelineProvider.createPipeline();
                                 return pipeline.run(instruction).then(function(result) {
-                                    return processResult(instruction, result, instructionCount, _this12);
+                                    return processResult(instruction, result, instructionCount, _this13);
                                 }).catch(function(error) {
                                     return {
                                         output: error instanceof Error ? error : new Error(error)
                                     };
                                 }).then(function(result) {
-                                    return resolveInstruction(instruction, result, !!instructionCount, _this12);
+                                    return resolveInstruction(instruction, result, !!instructionCount, _this13);
                                 });
                             }
                         }
@@ -8843,7 +8857,7 @@
         }), exports.TemplatingBindingLanguage = exports.SyntaxInterpreter = exports.ChildInterpolationBinding = exports.InterpolationBinding = exports.InterpolationBindingExpression = exports.AttributeMap = void 0;
         var _class, _temp, _dec, _class2, _class3, _temp2, _class4, _temp3;
         exports.configure = configure;
-        var _aureliaLogging = __webpack_require__(5), LogManager = _interopRequireWildcard(_aureliaLogging), _aureliaBinding = __webpack_require__(3), _aureliaTemplating = __webpack_require__(1), AttributeMap = exports.AttributeMap = (_temp = _class = function() {
+        var _aureliaLogging = __webpack_require__(5), LogManager = _interopRequireWildcard(_aureliaLogging), _aureliaBinding = __webpack_require__(2), _aureliaTemplating = __webpack_require__(1), AttributeMap = exports.AttributeMap = (_temp = _class = function() {
             function AttributeMap(svg) {
                 this.elements = Object.create(null), this.allElements = Object.create(null), this.svg = svg, 
                 this.registerUniversal("accesskey", "accessKey"), this.registerUniversal("contenteditable", "contentEditable"), 
@@ -9111,7 +9125,7 @@
         Object.defineProperty(exports, "__esModule", {
             value: !0
         }), exports.AttrBindingBehavior = void 0;
-        var _aureliaBinding = __webpack_require__(3), AttrBindingBehavior = exports.AttrBindingBehavior = function() {
+        var _aureliaBinding = __webpack_require__(2), AttrBindingBehavior = exports.AttrBindingBehavior = function() {
             function AttrBindingBehavior() {}
             return AttrBindingBehavior.prototype.bind = function bind(binding, source) {
                 binding.targetObserver = new _aureliaBinding.DataAttributeObserver(binding.target, binding.targetProperty);
@@ -9125,7 +9139,7 @@
         Object.defineProperty(exports, "__esModule", {
             value: !0
         }), exports.TwoWayBindingBehavior = exports.OneWayBindingBehavior = exports.OneTimeBindingBehavior = void 0;
-        var _dec, _class, _dec2, _class2, _dec3, _class3, _aureliaBinding = __webpack_require__(3), _aureliaMetadata = __webpack_require__(4), modeBindingBehavior = {
+        var _dec, _class, _dec2, _class2, _dec3, _class3, _aureliaBinding = __webpack_require__(2), _aureliaMetadata = __webpack_require__(4), modeBindingBehavior = {
             bind: function bind(binding, source, lookupFunctions) {
                 binding.originalMode = binding.mode, binding.mode = this.mode;
             },
@@ -9189,7 +9203,7 @@
         Object.defineProperty(exports, "__esModule", {
             value: !0
         }), exports.Compose = void 0;
-        var _dec, _dec2, _class, _desc, _value, _class2, _descriptor, _descriptor2, _descriptor3, _aureliaDependencyInjection = __webpack_require__(2), _aureliaTaskQueue = __webpack_require__(7), _aureliaTemplating = __webpack_require__(1), _aureliaPal = __webpack_require__(0), Compose = exports.Compose = (_dec = (0, 
+        var _dec, _dec2, _class, _desc, _value, _class2, _descriptor, _descriptor2, _descriptor3, _aureliaDependencyInjection = __webpack_require__(3), _aureliaTaskQueue = __webpack_require__(7), _aureliaTemplating = __webpack_require__(1), _aureliaPal = __webpack_require__(0), Compose = exports.Compose = (_dec = (0, 
         _aureliaTemplating.customElement)("compose"), _dec2 = (0, _aureliaDependencyInjection.inject)(_aureliaPal.DOM.Element, _aureliaDependencyInjection.Container, _aureliaTemplating.CompositionEngine, _aureliaTemplating.ViewSlot, _aureliaTemplating.ViewResources, _aureliaTaskQueue.TaskQueue), 
         _dec(_class = (0, _aureliaTemplating.noView)(_class = _dec2((_class2 = function() {
             function Compose(element, container, compositionEngine, viewSlot, viewResources, taskQueue) {
@@ -9264,7 +9278,7 @@
         Object.defineProperty(exports, "__esModule", {
             value: !0
         }), exports.DebounceBindingBehavior = void 0;
-        var _aureliaBinding = __webpack_require__(3), DebounceBindingBehavior = exports.DebounceBindingBehavior = function() {
+        var _aureliaBinding = __webpack_require__(2), DebounceBindingBehavior = exports.DebounceBindingBehavior = function() {
             function DebounceBindingBehavior() {}
             return DebounceBindingBehavior.prototype.bind = function bind(binding, source) {
                 var delay = arguments.length <= 2 || void 0 === arguments[2] ? 200 : arguments[2], methodToDebounce = "updateTarget";
@@ -9289,7 +9303,7 @@
         Object.defineProperty(exports, "__esModule", {
             value: !0
         }), exports.Focus = void 0;
-        var _dec, _dec2, _class, _aureliaTemplating = __webpack_require__(1), _aureliaBinding = __webpack_require__(3), _aureliaDependencyInjection = __webpack_require__(2), _aureliaTaskQueue = __webpack_require__(7), _aureliaPal = __webpack_require__(0), Focus = exports.Focus = (_dec = (0, 
+        var _dec, _dec2, _class, _aureliaTemplating = __webpack_require__(1), _aureliaBinding = __webpack_require__(2), _aureliaDependencyInjection = __webpack_require__(3), _aureliaTaskQueue = __webpack_require__(7), _aureliaPal = __webpack_require__(0), Focus = exports.Focus = (_dec = (0, 
         _aureliaTemplating.customAttribute)("focus", _aureliaBinding.bindingMode.twoWay), 
         _dec2 = (0, _aureliaDependencyInjection.inject)(_aureliaPal.DOM.Element, _aureliaTaskQueue.TaskQueue), 
         _dec(_class = _dec2(_class = function() {
@@ -9325,7 +9339,7 @@
         Object.defineProperty(exports, "__esModule", {
             value: !0
         }), exports.Hide = void 0;
-        var _dec, _dec2, _class, _aureliaDependencyInjection = __webpack_require__(2), _aureliaTemplating = __webpack_require__(1), _aureliaPal = __webpack_require__(0), _aureliaHideStyle = __webpack_require__(13), Hide = exports.Hide = (_dec = (0, 
+        var _dec, _dec2, _class, _aureliaDependencyInjection = __webpack_require__(3), _aureliaTemplating = __webpack_require__(1), _aureliaPal = __webpack_require__(0), _aureliaHideStyle = __webpack_require__(13), Hide = exports.Hide = (_dec = (0, 
         _aureliaTemplating.customAttribute)("hide"), _dec2 = (0, _aureliaDependencyInjection.inject)(_aureliaPal.DOM.Element, _aureliaTemplating.Animator, _aureliaDependencyInjection.Optional.of(_aureliaPal.DOM.boundary, !0)), 
         _dec(_class = _dec2(_class = function() {
             function Hide(element, animator, domBoundary) {
@@ -9349,7 +9363,7 @@
             Object.defineProperty(exports, "__esModule", {
                 value: !0
             }), exports.If = void 0;
-            var _dec, _dec2, _class, _aureliaTemplating = __webpack_require__(1), _aureliaDependencyInjection = __webpack_require__(2), If = exports.If = (_dec = (0, 
+            var _dec, _dec2, _class, _aureliaTemplating = __webpack_require__(1), _aureliaDependencyInjection = __webpack_require__(3), If = exports.If = (_dec = (0, 
             _aureliaTemplating.customAttribute)("if"), _dec2 = (0, _aureliaDependencyInjection.inject)(_aureliaTemplating.BoundViewFactory, _aureliaTemplating.ViewSlot), 
             _dec(_class = (0, _aureliaTemplating.templateController)(_class = _dec2(_class = function() {
                 function If(viewFactory, viewSlot) {
@@ -9432,7 +9446,7 @@
         Object.defineProperty(exports, "__esModule", {
             value: !0
         }), exports.Repeat = void 0;
-        var _dec, _dec2, _class, _desc, _value, _class2, _descriptor, _descriptor2, _descriptor3, _descriptor4, _aureliaDependencyInjection = __webpack_require__(2), _aureliaBinding = __webpack_require__(3), _aureliaTemplating = __webpack_require__(1), _repeatStrategyLocator = __webpack_require__(23), _repeatUtilities = __webpack_require__(8), _analyzeViewFactory = __webpack_require__(16), _abstractRepeater = __webpack_require__(15), Repeat = exports.Repeat = (_dec = (0, 
+        var _dec, _dec2, _class, _desc, _value, _class2, _descriptor, _descriptor2, _descriptor3, _descriptor4, _aureliaDependencyInjection = __webpack_require__(3), _aureliaBinding = __webpack_require__(2), _aureliaTemplating = __webpack_require__(1), _repeatStrategyLocator = __webpack_require__(23), _repeatUtilities = __webpack_require__(8), _analyzeViewFactory = __webpack_require__(16), _abstractRepeater = __webpack_require__(15), Repeat = exports.Repeat = (_dec = (0, 
         _aureliaTemplating.customAttribute)("repeat"), _dec2 = (0, _aureliaDependencyInjection.inject)(_aureliaTemplating.BoundViewFactory, _aureliaTemplating.TargetInstruction, _aureliaTemplating.ViewSlot, _aureliaTemplating.ViewResources, _aureliaBinding.ObserverLocator, _repeatStrategyLocator.RepeatStrategyLocator), 
         _dec(_class = (0, _aureliaTemplating.templateController)(_class = _dec2((_class2 = function(_AbstractRepeater) {
             function Repeat(viewFactory, instruction, viewSlot, viewResources, observerLocator, strategyLocator) {
@@ -9549,7 +9563,7 @@
         Object.defineProperty(exports, "__esModule", {
             value: !0
         }), exports.Replaceable = void 0;
-        var _dec, _dec2, _class, _aureliaDependencyInjection = __webpack_require__(2), _aureliaTemplating = __webpack_require__(1), Replaceable = exports.Replaceable = (_dec = (0, 
+        var _dec, _dec2, _class, _aureliaDependencyInjection = __webpack_require__(3), _aureliaTemplating = __webpack_require__(1), Replaceable = exports.Replaceable = (_dec = (0, 
         _aureliaTemplating.customAttribute)("replaceable"), _dec2 = (0, _aureliaDependencyInjection.inject)(_aureliaTemplating.BoundViewFactory, _aureliaTemplating.ViewSlot), 
         _dec(_class = (0, _aureliaTemplating.templateController)(_class = _dec2(_class = function() {
             function Replaceable(viewFactory, viewSlot) {
@@ -9570,7 +9584,7 @@
         Object.defineProperty(exports, "__esModule", {
             value: !0
         }), exports.SanitizeHTMLValueConverter = void 0;
-        var _dec, _dec2, _class, _aureliaBinding = __webpack_require__(3), _aureliaDependencyInjection = __webpack_require__(2), _htmlSanitizer = __webpack_require__(19), SanitizeHTMLValueConverter = exports.SanitizeHTMLValueConverter = (_dec = (0, 
+        var _dec, _dec2, _class, _aureliaBinding = __webpack_require__(2), _aureliaDependencyInjection = __webpack_require__(3), _htmlSanitizer = __webpack_require__(19), SanitizeHTMLValueConverter = exports.SanitizeHTMLValueConverter = (_dec = (0, 
         _aureliaBinding.valueConverter)("sanitizeHTML"), _dec2 = (0, _aureliaDependencyInjection.inject)(_htmlSanitizer.HTMLSanitizer), 
         _dec(_class = _dec2(_class = function() {
             function SanitizeHTMLValueConverter(sanitizer) {
@@ -9588,7 +9602,7 @@
         Object.defineProperty(exports, "__esModule", {
             value: !0
         }), exports.Show = void 0;
-        var _dec, _dec2, _class, _aureliaDependencyInjection = __webpack_require__(2), _aureliaTemplating = __webpack_require__(1), _aureliaPal = __webpack_require__(0), _aureliaHideStyle = __webpack_require__(13), Show = exports.Show = (_dec = (0, 
+        var _dec, _dec2, _class, _aureliaDependencyInjection = __webpack_require__(3), _aureliaTemplating = __webpack_require__(1), _aureliaPal = __webpack_require__(0), _aureliaHideStyle = __webpack_require__(13), Show = exports.Show = (_dec = (0, 
         _aureliaTemplating.customAttribute)("show"), _dec2 = (0, _aureliaDependencyInjection.inject)(_aureliaPal.DOM.Element, _aureliaTemplating.Animator, _aureliaDependencyInjection.Optional.of(_aureliaPal.DOM.boundary, !0)), 
         _dec(_class = _dec2(_class = function() {
             function Show(element, animator, domBoundary) {
@@ -9656,7 +9670,7 @@
         Object.defineProperty(exports, "__esModule", {
             value: !0
         }), exports.ThrottleBindingBehavior = void 0;
-        var _aureliaBinding = __webpack_require__(3), ThrottleBindingBehavior = exports.ThrottleBindingBehavior = function() {
+        var _aureliaBinding = __webpack_require__(2), ThrottleBindingBehavior = exports.ThrottleBindingBehavior = function() {
             function ThrottleBindingBehavior() {}
             return ThrottleBindingBehavior.prototype.bind = function bind(binding, source) {
                 var delay = arguments.length <= 2 || void 0 === arguments[2] ? 200 : arguments[2], methodToThrottle = "updateTarget";
@@ -9681,7 +9695,7 @@
         Object.defineProperty(exports, "__esModule", {
             value: !0
         }), exports.UpdateTriggerBindingBehavior = void 0;
-        var _class, _temp, _aureliaBinding = __webpack_require__(3), eventNamesRequired = "The updateTrigger binding behavior requires at least one event name argument: eg <input value.bind=\"firstName & updateTrigger:'blur'\">", notApplicableMessage = "The updateTrigger binding behavior can only be applied to two-way bindings on input/select elements.", UpdateTriggerBindingBehavior = exports.UpdateTriggerBindingBehavior = (_temp = _class = function() {
+        var _class, _temp, _aureliaBinding = __webpack_require__(2), eventNamesRequired = "The updateTrigger binding behavior requires at least one event name argument: eg <input value.bind=\"firstName & updateTrigger:'blur'\">", notApplicableMessage = "The updateTrigger binding behavior can only be applied to two-way bindings on input/select elements.", UpdateTriggerBindingBehavior = exports.UpdateTriggerBindingBehavior = (_temp = _class = function() {
             function UpdateTriggerBindingBehavior(eventManager) {
                 this.eventManager = eventManager;
             }
@@ -9706,7 +9720,7 @@
         Object.defineProperty(exports, "__esModule", {
             value: !0
         }), exports.With = void 0;
-        var _dec, _dec2, _class, _aureliaDependencyInjection = __webpack_require__(2), _aureliaTemplating = __webpack_require__(1), _aureliaBinding = __webpack_require__(3), With = exports.With = (_dec = (0, 
+        var _dec, _dec2, _class, _aureliaDependencyInjection = __webpack_require__(3), _aureliaTemplating = __webpack_require__(1), _aureliaBinding = __webpack_require__(2), With = exports.With = (_dec = (0, 
         _aureliaTemplating.customAttribute)("with"), _dec2 = (0, _aureliaDependencyInjection.inject)(_aureliaTemplating.BoundViewFactory, _aureliaTemplating.ViewSlot), 
         _dec(_class = (0, _aureliaTemplating.templateController)(_class = _dec2(_class = function() {
             function With(viewFactory, viewSlot) {
@@ -9752,7 +9766,7 @@
         Object.defineProperty(exports, "__esModule", {
             value: !0
         }), exports.RouteHref = void 0;
-        var _dec, _dec2, _dec3, _dec4, _dec5, _class, _aureliaTemplating = __webpack_require__(1), _aureliaDependencyInjection = __webpack_require__(2), _aureliaRouter = __webpack_require__("aurelia-router"), _aureliaPal = __webpack_require__(0), _aureliaLogging = __webpack_require__(5), LogManager = _interopRequireWildcard(_aureliaLogging), logger = LogManager.getLogger("route-href"), RouteHref = exports.RouteHref = (_dec = (0, 
+        var _dec, _dec2, _dec3, _dec4, _dec5, _class, _aureliaTemplating = __webpack_require__(1), _aureliaDependencyInjection = __webpack_require__(3), _aureliaRouter = __webpack_require__("aurelia-router"), _aureliaPal = __webpack_require__(0), _aureliaLogging = __webpack_require__(5), LogManager = _interopRequireWildcard(_aureliaLogging), logger = LogManager.getLogger("route-href"), RouteHref = exports.RouteHref = (_dec = (0, 
         _aureliaTemplating.customAttribute)("route-href"), _dec2 = (0, _aureliaTemplating.bindable)({
             name: "route",
             changeHandler: "processChange"
@@ -9778,7 +9792,8 @@
                 return this.router.ensureConfigured().then(function() {
                     if (!_this.isActive) return null;
                     var href = _this.router.generate(_this.route, _this.params);
-                    return _this.element.setAttribute(_this.attribute, href), null;
+                    return _this.element.au.controller ? _this.element.au.controller.viewModel[_this.attribute] = href : _this.element.setAttribute(_this.attribute, href), 
+                    null;
                 }).catch(function(reason) {
                     logger.error(reason);
                 });
@@ -9816,7 +9831,7 @@
             Object.defineProperty(exports, "__esModule", {
                 value: !0
             }), exports.RouterView = void 0;
-            var _dec, _dec2, _class, _desc, _value, _class2, _descriptor, _descriptor2, _descriptor3, _descriptor4, _aureliaDependencyInjection = __webpack_require__(2), _aureliaTemplating = __webpack_require__(1), _aureliaRouter = __webpack_require__("aurelia-router"), _aureliaMetadata = __webpack_require__(4), _aureliaPal = __webpack_require__(0), SwapStrategies = function() {
+            var _dec, _dec2, _class, _desc, _value, _class2, _descriptor, _descriptor2, _descriptor3, _descriptor4, _aureliaDependencyInjection = __webpack_require__(3), _aureliaBinding = __webpack_require__(2), _aureliaTemplating = __webpack_require__(1), _aureliaRouter = __webpack_require__("aurelia-router"), _aureliaMetadata = __webpack_require__(4), _aureliaPal = __webpack_require__(0), SwapStrategies = function() {
                 function SwapStrategies() {}
                 return SwapStrategies.prototype.before = function before(viewSlot, previousView, callback) {
                     var promise = Promise.resolve(callback());
@@ -9862,25 +9877,29 @@
                         waitToSwap || _this.swap(viewPortInstruction);
                     });
                 }, RouterView.prototype.swap = function swap(viewPortInstruction) {
-                    var _this2 = this, work = function work() {
-                        var previousView = _this2.view, swapStrategy = void 0, viewSlot = _this2.viewSlot, layoutInstruction = viewPortInstruction.layoutInstruction;
+                    var _this2 = this, layoutInstruction = viewPortInstruction.layoutInstruction, work = function work() {
+                        var previousView = _this2.view, swapStrategy = void 0, viewSlot = _this2.viewSlot;
                         (swapStrategy = _this2.swapOrder in swapStrategies ? swapStrategies[_this2.swapOrder] : swapStrategies.after)(viewSlot, previousView, function() {
-                            var waitForView = void 0;
-                            return layoutInstruction ? (layoutInstruction.viewModel || (layoutInstruction.viewModel = {}), 
-                            waitForView = _this2.compositionEngine.createController(layoutInstruction).then(function(layout) {
-                                return _aureliaTemplating.ShadowDOM.distributeView(viewPortInstruction.controller.view, layout.slots || layout.view.slots), 
-                                layout.view || layout;
-                            })) : waitForView = Promise.resolve(viewPortInstruction.controller.view), waitForView.then(function(newView) {
-                                return _this2.view = newView, viewSlot.add(newView);
+                            return Promise.resolve().then(function() {
+                                return viewSlot.add(_this2.view);
                             }).then(function() {
                                 _this2._notify();
                             });
                         });
+                    }, ready = function ready(owningView) {
+                        return viewPortInstruction.controller.automate(_this2.overrideContext, owningView), 
+                        _this2.compositionTransactionOwnershipToken ? _this2.compositionTransactionOwnershipToken.waitForCompositionComplete().then(function() {
+                            return _this2.compositionTransactionOwnershipToken = null, work();
+                        }) : work();
                     };
-                    return viewPortInstruction.controller.automate(this.overrideContext, this.owningView), 
-                    this.compositionTransactionOwnershipToken ? this.compositionTransactionOwnershipToken.waitForCompositionComplete().then(function() {
-                        return _this2.compositionTransactionOwnershipToken = null, work();
-                    }) : work();
+                    return layoutInstruction ? (layoutInstruction.viewModel || (layoutInstruction.viewModel = {}), 
+                    this.compositionEngine.createController(layoutInstruction).then(function(controller) {
+                        return _aureliaTemplating.ShadowDOM.distributeView(viewPortInstruction.controller.view, controller.slots || controller.view.slots), 
+                        controller.automate((0, _aureliaBinding.createOverrideContext)(layoutInstruction.viewModel), _this2.owningView), 
+                        controller.view.children.push(viewPortInstruction.controller.view), controller.view || controller;
+                    }).then(function(newView) {
+                        return _this2.view = newView, ready(newView);
+                    })) : (this.view = viewPortInstruction.controller.view, ready(this.owningView));
                 }, RouterView.prototype._notify = function _notify() {
                     this.compositionTransactionNotifier && (this.compositionTransactionNotifier.done(), 
                     this.compositionTransactionNotifier = null);
