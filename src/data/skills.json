@@ -1,0 +1,22 @@
+[
+    {
+        "category": "Cloud Services",
+        "items": ["Lambda · API Gateway · S3 · CloudFront · CloudWatch Logs · CodeBuild · CodePipeline · S3 · RDS · Cognito User Pool · Cognito Identity Pool · IAM · SQS · SNS · SES · CloudWatch Events"]
+    },
+    {
+        "category": "Cloud Infrastructure",
+        "items": ["Serverless Framework · AWS SDK & CDK & CLI & Console"]
+    },
+    {
+        "category": "Development Tools",
+        "items": ["Git · GitFlow · DVCS Integration · JIRA · Confluence · Scrum · Jenkins · VSCode"]
+    },
+    {
+        "category": "Front End",
+        "items": ["JavaScript · Node.js · Express.js · d3.js · Python · Plot.ly · Plot.ly Dash · OpenMCT · Vue.js · Bulma · Material Design · Webpack · Electron · Jupyter Notebooks"]
+    },
+    {
+        "category": "Back End",
+        "items": ["Postgres · Redis · ZMQ · ElasticSearch · Kafka · Ckan · CentOS · Ubuntu · Docker"]
+    }
+]

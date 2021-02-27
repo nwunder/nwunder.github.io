@@ -1,28 +1,32 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <section class="section">
+      <div class="container">
+      <div class="columns">
+        <div class="column is-2">
+          <b-menu>
+            <b-menu-list>
+              <b-menu-item icon="information-outline" label="Resume" tag="router-link" :to="{path: '/resume'}"></b-menu-item>
+              <b-menu-item icon="information-outline" label="Work" tag="router-link" :to="{path: '/work'}"></b-menu-item>
+            </b-menu-list>
+          </b-menu>
+        </div>
+        <div class="column is-10">
+          <router-view></router-view>
+        </div>
+      </div>
+      </div>
+    </section>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
-
 export default {
-  name: 'App',
+  name: 'resume',
   components: {
-    HelloWorld
   }
 }
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
 </style>

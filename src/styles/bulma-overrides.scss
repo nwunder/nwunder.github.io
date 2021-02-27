@@ -1,0 +1,19 @@
+@import "~bulma/sass/utilities/_all";
+
+@font-face {
+    font-family: primaryFontRegular;
+    src: url('../assets/fonts/gentium-book-basic/GentiumBookBasic-Regular.ttf');
+}
+
+@font-face {
+    font-family: secondaryFontRegular;
+    src: url('../assets/fonts/telex/Telex-Regular.ttf');
+}
+
+$family-primary: primaryFontRegular, $family-sans-serif;
+
+$family-secondary: secondaryFontRegular, $family-sans-serif;
+
+// Import Bulma and Buefy styles
+@import "~bulma";
+@import "~buefy/src/scss/buefy";
