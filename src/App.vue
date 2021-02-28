@@ -3,7 +3,7 @@
     <section class="section">
       <div class="container">
       <div class="columns">
-        <div class="column is-2">
+        <div class="column is-2 is-family-secondary">
           <b-menu>
             <b-menu-list>
               <b-menu-item icon="information-outline" label="Resume" tag="router-link" :to="{path: '/resume'}"></b-menu-item>

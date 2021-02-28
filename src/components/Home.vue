@@ -6,8 +6,8 @@
         <div class="is-size-5 has-text-justified">Dedicated software engineer with over 7 years professional experience in a scientific research environment. A results-oriented individual whose strong work ethic and commitment to excellence is demonstrated by a high level of initiative, a “do-it-right” attitude, and a proven success at setting and achieving both personal and professional goals.</div>
       </div>
 
-      <div class="column is-offset-1">
-        <Info v-for="detail in details" :key="detail.title" :title="detail.title" :text="detail.text" />
+      <div class="column is-offset-1-desktop">
+        <Info :details="details" />
       </div>
     </div>
 
