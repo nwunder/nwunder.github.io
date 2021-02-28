@@ -7,20 +7,7 @@
       </div>
 
       <div class="column is-offset-1">
-        <div class="columns">
-          <div class="column">
-            <div class="mt-5 mb-4 is-size-5 is-uppercase is-family-secondary has-text-weight-semibold has-text-success">Phone</div>
-            <div class="mt-2 mb-4 is-size-5 is-uppercase is-family-secondary has-text-weight-semibold has-text-success">Email</div>
-            <div class="mt-2 mb-4 is-size-5 is-uppercase is-family-secondary has-text-weight-semibold has-text-success">Work</div>
-            <div class="mt-2 mb-4 is-size-5 is-uppercase is-family-secondary has-text-weight-semibold has-text-success">Location</div>
-          </div>
-          <div class="column">
-            <div class="mt-5 mb-4 is-size-5 is-family-secondary">303 · 913 · 2587</div>
-            <div class="mt-2 mb-4 is-size-5 is-family-secondary">ndwunder@gmail.com</div>
-            <div class="mt-2 mb-4 is-size-5 is-family-secondary">nwunder.github.io</div>
-            <div class="mt-2 mb-4 is-size-5 is-family-secondary">Denver, Colorado</div>
-          </div>
-        </div>
+        <Info v-for="detail in details" :key="detail.title" :title="detail.title" :text="detail.text" />
       </div>
     </div>
 
@@ -44,21 +31,25 @@
 
 <script>
 import Name from './resume/Name';
+import Info from './resume/Info';
 import Header from './resume/Header';
 import Experience from './resume/Experience';
 import Skill from './resume/Skill';
 import Citation from './resume/Citation';
 
+import details from '../data/details.json';
 import publicationCitations from '../data/publication-citations.json';
 import posterCitations from '../data/poster-citations.json';
 import jobExperience from '../data/job-experience.json';
 import educationExperience from '../data/education-experience.json';
 import skills from '../data/skills.json';
+
 export default {
   name: 'Home',
-  components: {Name, Header, Experience, Skill, Citation},
+  components: {Name, Info, Header, Experience, Skill, Citation},
   data() {
     return {
+      details: details,
       publicationCitations: publicationCitations,
       posterCitations: posterCitations,
       jobExperience: jobExperience,
