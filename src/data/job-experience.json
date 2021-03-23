@@ -4,14 +4,14 @@
         "timeSpan": "May 2013—Present",
         "title": "Software Engineer",
         "skills": [
-            "Designed and built complex data systems and data driven tools for visualization and analysis workloads in on-premises, cloud, and hybrid environments.",
-            "Architected, built, and maintained end-to-end ETL pipelines collecting experimental data from lab equipment and field devices in short term and multi year experiments for both streaming and continuous batch workloads.",
-            "Technical leader and mentor to a team of developers for the DOE Energy Materials Network (EMN) data hubs, and provided software engineer leadership to other developers across the lab.",
-            "Developed, deployed, and maintained well architected AWS cloud native workloads, hybrid workloads, and successfully migrated on-premises workloads to cloud.",
-            "Worked closely with researchers to define requirements for scientific software engineering on database schema design, APIs, analytic tool use cases, and web based visualizations.",
-            "Integrated cloud workloads with on-premises services, working with and across several departments and groups at the lab to achieve project milestones.",
-            "Developed several full stack web applications and APIs, leveraging modern web technologies and frameworks.",
-            "Maintained healthy relationships with a diverse group of scientist, engineers, and professionals by working well with others, providing constructive feedback, and inviting feedback on my performance from others."
+            "Design and build complex data systems for visualization and analysis workloads in on-premises, cloud, and hybrid environments.",
+            "Architect, build, and maintain end-to-end ETL pipelines collecting experimental data from lab equipment and field devices in research experiments for both near-real time streaming workloads and long-running batch workloads.",
+            "Technical lead and mentor to a team of developers for the DOE Energy Materials Network (EMN) data hubs, and provide software engineer leadership to other developers across the lab.",
+            "Develop, deploy, and maintain well architected AWS cloud native workloads, hybrid workloads, and migrate legacy on-premises workloads to cloud.",
+            "Work closely with researchers to define requirements for scientific software engineering on database schema design, APIs, analytic tool use cases, and web based visualizations.",
+            "Integrate cloud workloads with on-premises services, working with and across several departments and groups at the lab to achieve project milestones.",
+            "Develop full stack web applications and APIs, leveraging modern web technologies and frameworks.",
+            "Maintain healthy relationships with a diverse group of scientist, engineers, and professionals by working well with others, providing constructive feedback, and inviting feedback on my performance from others."
         ]
     },
     {
